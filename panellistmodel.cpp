@@ -22,7 +22,6 @@ void PanelListModel::removePanels()
     {
         if( tmp - mList.at(i).foundEpoc > 15 )
         {
-
             qDebug() << "Remove panel: " << mList.at(i).macaddr;
             beginRemoveRows(QModelIndex(), i, i);
             mList.remove(i);
@@ -100,6 +99,7 @@ void PanelListModel::insertData(const PanelItem &unit)
         if(mList.at(i).macaddr == unit.macaddr)
         {
             qDebug() << "Found at: " << i << "/" << mList.size();
+            mList[i].foundEpoc = unit.foundEpoc;
             if(     mList.at(i).hostname != unit.hostname ||
                     mList.at(i).machine != unit.machine ||
                     mList.at(i).ipv4addr != unit.ipv4addr ||

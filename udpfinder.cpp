@@ -18,10 +18,10 @@ UdpFinder::UdpFinder(QObject *parent)
         }
     }
     mPanelListModel = nullptr;
-    this->scanCmd();
-    QTimer *timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(scanCmd()));
-    timer->start(2000);
+    //this->scanCmd();
+    mtimer = new QTimer(this);
+    connect(mtimer, SIGNAL(timeout()), this, SLOT(scanCmd()));
+    mtimer->start(500);
 
 }
 
@@ -32,6 +32,9 @@ void UdpFinder::setPanelList(PanelListModel *pl)
 
 void UdpFinder::scanCmd()
 {
+    if(mtimer->interval() < 2000)
+        mtimer->setInterval(2000);
+
     if(msocket && !msocket->hasPendingDatagrams())
     {
         msocket->close();

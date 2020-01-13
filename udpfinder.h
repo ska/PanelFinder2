@@ -39,6 +39,7 @@ private:
     PanelListModel *mPanelListModel;
     QStringList mipaddr;
     quint8 mtest;
+    QTimer *mtimer;
 
 };
 
