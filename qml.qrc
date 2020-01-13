@@ -1,0 +1,21 @@
+<RCC>
+    <qresource prefix="/">
+        <file>main.qml</file>
+        <file>PanelItem.qml</file>
+        <file>pics/copy.png</file>
+        <file>pics/copyGR.png</file>
+        <file>pics/exb.png</file>
+        <file>pics/exn.png</file>
+        <file>pics/exo.png</file>
+        <file>pics/exr.png</file>
+        <file>pics/mushA.png</file>
+        <file>pics/mushB.png</file>
+        <file>pics/mushG.png</file>
+        <file>pics/mushGr.png</file>
+        <file>pics/mushO.png</file>
+        <file>pics/mushR.png</file>
+        <file>pics/mushV.png</file>
+        <file>pics/settingsGR.png</file>
+        <file>pics/settingsW.png</file>
+    </qresource>
+</RCC>
