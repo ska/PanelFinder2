@@ -28,3 +28,8 @@ DISTFILES += \
     pics/mushV.png \
     pics/settingsGR.png \
     pics/settingsW.png
+
+
+# Default rules for deployment.
+target.path = /home/admin
+INSTALLS += target

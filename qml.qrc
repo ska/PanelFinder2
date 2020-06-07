@@ -17,5 +17,7 @@
         <file>pics/mushV.png</file>
         <file>pics/settingsGR.png</file>
         <file>pics/settingsW.png</file>
+        <file>pics/on3r.png</file>
+        <file>pics/windows.png</file>
     </qresource>
 </RCC>

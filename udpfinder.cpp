@@ -9,12 +9,23 @@ UdpFinder::UdpFinder(QObject *parent)
     mtest = 0;
     mipaddr.clear();
 
-    const QHostAddress &localhost = QHostAddress(QHostAddress::LocalHost);
-    for (const QHostAddress &address: QNetworkInterface::allAddresses())
+    QList<QNetworkInterface> list = QNetworkInterface::allInterfaces();
+    foreach (QNetworkInterface iface, list)
     {
-        if (address.protocol() == QAbstractSocket::IPv4Protocol && address != localhost)
+        if(  iface.flags().testFlag(QNetworkInterface::IsUp) && \
+             !iface.flags().testFlag(QNetworkInterface::IsLoopBack)
+          )
         {
-            mipaddr.append( address.toString() );
+            foreach (QNetworkAddressEntry entry,  iface.addressEntries() )
+            {
+                if( entry.ip().protocol() == QAbstractSocket::IPv4Protocol )
+                {
+                    qDebug() << "  "+ iface.name() +\
+                                "  "+ entry.ip().toString() +\
+                                "  "+ iface.hardwareAddress();
+                    mipaddr.append( entry.ip().toString() );
+                }
+            }
         }
     }
     mPanelListModel = nullptr;
@@ -83,4 +94,9 @@ void UdpFinder::readyRead()
         if(mPanelListModel)
             mPanelListModel->insertData({hostName, moduleName, mac, ip, netmask, QDateTime::currentSecsSinceEpoch()});
     }
+}
+
+void UdpFinder::testString(QString string)
+{
+    qDebug() << string;
 }

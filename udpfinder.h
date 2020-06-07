@@ -27,6 +27,7 @@ class UdpFinder : public QObject
 public:
     explicit UdpFinder(QObject *parent = nullptr);
     void setPanelList(PanelListModel *pl);
+    Q_INVOKABLE void testString(QString string);
 
 signals:
 

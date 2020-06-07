@@ -8,9 +8,9 @@ ApplicationWindow {
     visible: true
     width: 750
     height: 500
-    title: qsTr("Exor Panel finder")
+    title: qsTr("Exor Panel finder " + "" + filterModelQml.getVersion() )
 
-    Rectangle{
+    Rectangle {
         anchors.top: parent.top;
         width: parent.width
         height: parent.height-40
@@ -47,7 +47,7 @@ ApplicationWindow {
         }
     }
 
-    Rectangle{
+    Rectangle {
         anchors.bottom: parent.bottom;
         width: parent.width
         height: 40
@@ -66,15 +66,34 @@ ApplicationWindow {
                     filterModelQml.setFilterString(text);
                 }
             }
+/*
+            ComboBox {
+                id: net
+                height: parent.height
+                Layout.fillWidth: true
+                Layout.minimumWidth: 120
+                Layout.preferredWidth: 130
+                Layout.maximumWidth: 200
+                model: ListModel {
+                    id: netItems
+                    ListElement { text: "eth0 (192.168.100.100)";  name: "eth0"; ip: "192.168.100.100" }
+                    ListElement { text: "eth1 (192.168.1.105)";    name: "eth1"; ip: "192.168.1.105" }
+                }
+                onCurrentIndexChanged: {
+                    udpfinderQml.testString( netItems.get(currentIndex).text + ", " + netItems.get(currentIndex).ip)
+                }
+            }
+*/
         }
     }
 
     statusBar: StatusBar {
         RowLayout {
+            height: 40;
             anchors.fill: parent
             Label {
                 id: statusBarLabel
-                text: "Waiting.."
+                text: "Waiting.. ("+filterModelQml.getRandomNum()+")"
             }
         }
     }

@@ -90,21 +90,21 @@ void PanelListModel::addData(const PanelItem &unit)
 void PanelListModel::insertData(const PanelItem &unit)
 {
     quint16 i;
-
+#ifdef QT_DEBUG
     qDebug() << "Try to insert data: " << unit.macaddr;
     qDebug() << "--> " << unit.foundEpoc;
-
+#endif
     for(i=0; i<mList.size();i++)
     {
         if(mList.at(i).macaddr == unit.macaddr)
         {
-            qDebug() << "Found at: " << i << "/" << mList.size();
+            //qDebug() << "Found at: " << i << "/" << mList.size();
             mList[i].foundEpoc = unit.foundEpoc;
             if(     mList.at(i).hostname != unit.hostname ||
                     mList.at(i).machine != unit.machine ||
                     mList.at(i).ipv4addr != unit.ipv4addr ||
                     mList.at(i).ipv4netmask != unit.ipv4netmask
-               )
+              )
             {
                 beginRemoveRows(QModelIndex(), i, i);
                 mList.remove(i);
@@ -117,9 +117,9 @@ void PanelListModel::insertData(const PanelItem &unit)
 
     if(i==mList.size())
     {
-        qDebug() << "Not found: " << i << "/" << mList.size();
+        //qDebug() << "Not found: " << i << "/" << mList.size();
         this->addData(unit);
-        qDebug() << "New Size: " << mList.size();
+        //qDebug() << "New Size: " << mList.size();
     }
 }
 
@@ -169,7 +169,6 @@ QHash<int, QByteArray> PanelListModel::roleNames() const
     roles[Ipv4netmaskRole]  = "ipv4netmask";
     return roles;
 }
-
 /*********************** PanelListModel *****************************/
 
 
@@ -177,7 +176,14 @@ QHash<int, QByteArray> PanelListModel::roleNames() const
 FilterProxyModel::FilterProxyModel(QObject *parent)
     : QSortFilterProxyModel(parent)
 {
-    setSortOrder(false);
+
+#if QT_VERSION >= 0x050A00
+    mRandomNum = (quint8) ( QRandomGenerator::global()->generate()  % 100);
+#else
+    QTime time = QTime::currentTime();
+    qsrand((uint)time.msec());
+    mRandomNum = (qrand() % 100);
+#endif
 }
 
 FilterProxyModel::~FilterProxyModel()
@@ -191,19 +197,6 @@ void FilterProxyModel::setFilterString(QString string)
     this->setFilterFixedString(string);
 }
 
-void FilterProxyModel::setSortOrder(bool checked)
-{
-    if(checked)
-    {
-        this->sort(0, Qt::DescendingOrder);
-    }
-    else
-    {
-        this->sort(0, Qt::AscendingOrder);
-    }
-}
-
-
 void FilterProxyModel::setClipboard(QClipboard *clipboard)
 {
     mclipboard = clipboard;
@@ -211,5 +204,13 @@ void FilterProxyModel::setClipboard(QClipboard *clipboard)
 void FilterProxyModel::copyIpToClipboard(QString ipadr)
 {
     mclipboard->setText(ipadr);
+}
+QString FilterProxyModel::getVersion()
+{
+    return "v2.1";
+}
+quint8 FilterProxyModel::getRandomNum() const
+{
+    return mRandomNum;
 }
 /******************** FilterProxyModel **************************/

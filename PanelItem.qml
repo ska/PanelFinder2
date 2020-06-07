@@ -1,4 +1,6 @@
 import QtQuick 2.0
+import QtQuick.Window 2.12
+import QtQuick.Controls 2.12
 
 Rectangle{
     id: panelItem;
@@ -39,22 +41,26 @@ Rectangle{
         Image {
             width: parent.width
             height: parent.height
-
             source: {
-
                 switch(panelItem.machine)
                 {
+                case "UN30":
+                case "UN31":
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushA.png" : "qrc:/pics/windows.png";
                 case "UN63":
                 case "UN73":
-                    return "qrc:/pics/exn.png";
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushGr.png" : "qrc:/pics/exn.png";
                 case "UN66":
-                    return "qrc:/pics/exo.png";
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushO.png" : "qrc:/pics/exo.png";
                 case "UN67":
                 case "UN68":
-                case "UN69":
-                    return "qrc:/pics/exr.png";
+                case "UN83":
+                case "UN84":
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushR.png" : "qrc:/pics/exr.png";
+                case "UN75":
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushV.png" : "qrc:/pics/on3r.png";
                 default:
-                    return "qrc:/pics/exb.png";
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushB.png" : "qrc:/pics/exb.png";
                 }
             }
         }

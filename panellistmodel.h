@@ -8,6 +8,10 @@
 #include <QClipboard>
 #include <QDateTime>
 #include <QTimer>
+#if QT_VERSION >= 0x050A00
+#include <QRandomGenerator>
+#endif
+
 
 struct PanelItem
 {
@@ -58,18 +62,17 @@ class FilterProxyModel : public QSortFilterProxyModel
 {
     Q_OBJECT
 public:
-
     FilterProxyModel(QObject* parent = 0);
-
     ~FilterProxyModel();
     void setClipboard(QClipboard *clipboard);
 
     Q_INVOKABLE void setFilterString(QString string);
-
-    Q_INVOKABLE void setSortOrder(bool checked);
-
     Q_INVOKABLE void copyIpToClipboard(QString ipadr);
+    Q_INVOKABLE QString getVersion();
+    Q_INVOKABLE quint8 getRandomNum() const;
+
     QClipboard *mclipboard;
+    quint8 mRandomNum;
 };
 
 
