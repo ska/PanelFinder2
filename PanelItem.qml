@@ -59,6 +59,16 @@ Rectangle{
                     return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushR.png" : "qrc:/pics/exr.png";
                 case "UN75":
                     return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushV.png" : "qrc:/pics/on3r.png";
+                case "KuS01":
+                case "KuS02":
+                case "KuS03":
+                case "KuS04":
+                case "KuS05":
+                case "KnS01":
+                case "KnS02":
+                    settingsImageContainer.visible = false;
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushV.png" : "qrc:/pics/emb.png";
+
                 default:
                     return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushB.png" : "qrc:/pics/exb.png";
                 }

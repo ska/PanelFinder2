@@ -2,6 +2,7 @@
     <qresource prefix="/">
         <file>main.qml</file>
         <file>PanelItem.qml</file>
+        <file>pics/icon.ico</file>
         <file>pics/copy.png</file>
         <file>pics/copyGR.png</file>
         <file>pics/exb.png</file>
@@ -19,5 +20,6 @@
         <file>pics/settingsW.png</file>
         <file>pics/on3r.png</file>
         <file>pics/windows.png</file>
+        <file>pics/emb.png</file>
     </qresource>
 </RCC>
