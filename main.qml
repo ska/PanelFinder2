@@ -66,7 +66,7 @@ ApplicationWindow {
                     filterModelQml.setFilterString(text);
                 }
             }
-/*
+
             ComboBox {
                 id: net
                 height: parent.height
@@ -74,16 +74,13 @@ ApplicationWindow {
                 Layout.minimumWidth: 120
                 Layout.preferredWidth: 130
                 Layout.maximumWidth: 200
-                model: ListModel {
-                    id: netItems
-                    ListElement { text: "eth0 (192.168.100.100)";  name: "eth0"; ip: "192.168.100.100" }
-                    ListElement { text: "eth1 (192.168.1.105)";    name: "eth1"; ip: "192.168.1.105" }
-                }
+                model: udpfinderModel
+                textRole: "display"
+
                 onCurrentIndexChanged: {
-                    udpfinderQml.testString( netItems.get(currentIndex).text + ", " + netItems.get(currentIndex).ip)
+                    udpfinderQml.testString( currentIndex )
                 }
             }
-*/
         }
     }
 

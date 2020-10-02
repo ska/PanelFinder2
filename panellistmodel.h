@@ -42,6 +42,7 @@ public:
     void insertData(const PanelItem &unit);
     int rowCount(const QModelIndex & parent = QModelIndex()) const;
     QVariant data(const QModelIndex & index, int role = Qt::DisplayRole) const;
+    void clearList();
 
 protected:
     QHash<int, QByteArray> roleNames() const;

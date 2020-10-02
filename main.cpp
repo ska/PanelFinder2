@@ -8,6 +8,7 @@
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
+
     QClipboard *clipboard = QGuiApplication::clipboard();
 
     PanelListModel listModel;
@@ -26,6 +27,10 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
     QQmlContext* context = engine.rootContext();
     context->setContextProperty("filterModelQml", &filterModel);
+
+    QStringListModel netIfModel;
+    netIfModel.setStringList(udpfinder->ipaddr());
+    context->setContextProperty("udpfinderModel", &netIfModel);
     context->setContextProperty("udpfinderQml", udpfinder);
 
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));

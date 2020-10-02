@@ -6,24 +6,30 @@ UdpFinder::UdpFinder(QObject *parent)
     : QObject(parent)
     , msocket(nullptr)
 {
-    mtest = 0;
-    mipaddr.clear();
+    mcase = 0;
+    m_SelectedInterface = 0;
+    mIpaddr.clear();
+    mIpaddr.append( "All interfaces" );
 
     QList<QNetworkInterface> list = QNetworkInterface::allInterfaces();
     foreach (QNetworkInterface iface, list)
     {
         if(  iface.flags().testFlag(QNetworkInterface::IsUp) && \
-             !iface.flags().testFlag(QNetworkInterface::IsLoopBack)
-          )
+             iface.flags().testFlag(QNetworkInterface::IsRunning) && \
+             !iface.flags().testFlag(QNetworkInterface::IsLoopBack) && \
+             !iface.flags().testFlag(QNetworkInterface::IsPointToPoint)
+             )
         {
             foreach (QNetworkAddressEntry entry,  iface.addressEntries() )
             {
                 if( entry.ip().protocol() == QAbstractSocket::IPv4Protocol )
                 {
-                    qDebug() << "  "+ iface.name() +\
+                    int index = iface.index();
+                    qDebug() << QString("ETH Interface: %1").arg(index) +\
+                                "  "+ iface.name() +\
                                 "  "+ entry.ip().toString() +\
                                 "  "+ iface.hardwareAddress();
-                    mipaddr.append( entry.ip().toString() );
+                    mIpaddr.append( entry.ip().toString() );
                 }
             }
         }
@@ -32,7 +38,7 @@ UdpFinder::UdpFinder(QObject *parent)
     //this->scanCmd();
     mtimer = new QTimer(this);
     connect(mtimer, SIGNAL(timeout()), this, SLOT(scanCmd()));
-    mtimer->start(500);
+    mtimer->start(100);
 
 }
 
@@ -43,8 +49,8 @@ void UdpFinder::setPanelList(PanelListModel *pl)
 
 void UdpFinder::scanCmd()
 {
-    if(mtimer->interval() < 2000)
-        mtimer->setInterval(2000);
+    if(mtimer->interval() < 1000)
+        mtimer->setInterval(1000);
 
     if(msocket && !msocket->hasPendingDatagrams())
     {
@@ -55,17 +61,61 @@ void UdpFinder::scanCmd()
     if(!msocket)
     {
         msocket = new QUdpSocket(this);
-        mtest++;
-        if(mtest == mipaddr.size())
-            mtest = 0;
+        if(m_SelectedInterface == 0 && m_RunningInterface == mIpaddr.size())
+        {
+            m_RunningInterface = 0;
+        }
+        if(m_SelectedInterface != 0)
+        {
+            m_RunningInterface = m_SelectedInterface;
+        }
 
-        msocket->bind(QHostAddress( mipaddr.at(mtest)), 9999);
+        msocket->bind(QHostAddress( mIpaddr.at(m_RunningInterface)), 9999);
         connect(msocket, SIGNAL(readyRead()), this, SLOT(readyRead()));
     }
     QByteArray Data;
     Data.clear();
+
+    //qDebug() << "m_SelectedInterface: " << m_SelectedInterface;
+    //qDebug() << "mcase: " << mcase << "m_RunningInterface: " << m_RunningInterface;
+    qint64 ret = 0;
+
+#ifdef TEST
+    switch(mcase)
+    {
+        case 0:
+            Data.append("WhereAreYou.02!");
+            ret = msocket->writeDatagram(Data, Data.size(), QHostAddress::Broadcast, 991);
+            mcase++;
+            break;
+
+        case 1:
+            Data.append("WhereAreYou.01!");
+            ret = msocket->writeDatagram(Data, Data.size(), QHostAddress::Broadcast, 991);
+            mcase++;
+            break;
+
+        case 2:
+            Data.append("WhereAreYou.02");
+            ret = msocket->writeDatagram(Data, Data.size(), QHostAddress::Broadcast, 991);
+            mcase++;
+
+        default:
+            mcase = 0;
+            if(m_SelectedInterface == 0)
+            {
+                m_RunningInterface ++;
+            }
+            break;
+    }
+#else
     Data.append("WhereAreYou.02");
     msocket->writeDatagram(Data,QHostAddress::Broadcast,991);
+    if(m_SelectedInterface == 0)
+    {
+        m_RunningInterface ++;
+    }
+#endif
 
 }
 
@@ -96,7 +146,17 @@ void UdpFinder::readyRead()
     }
 }
 
+QStringList UdpFinder::ipaddr() const
+{
+    return mIpaddr;
+}
+
 void UdpFinder::testString(QString string)
 {
-    qDebug() << string;
+    m_SelectedInterface = string.toUInt();
+    qDebug() << "Selected interface NUM: " << QString("%1").arg((quint16)m_SelectedInterface, 0, 10).toUpper();
+    mcase = 0;
+    m_RunningInterface = 0;
+    //mPanelListModel->clearList();
+    mtimer->setInterval(1000);
 }

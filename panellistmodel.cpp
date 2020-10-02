@@ -3,8 +3,6 @@
 /*********************** PanelListModel *****************************/
 PanelListModel::PanelListModel()
 {
-    qDebug() << "PanelListModel constructor";
-
     QTimer *timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(removePanels()));
     timer->start(10000);
@@ -12,7 +10,6 @@ PanelListModel::PanelListModel()
 
 PanelListModel::~PanelListModel()
 {
-    qDebug() << "PanelListModel destructor";
 }
 
 void PanelListModel::removePanels()
@@ -28,7 +25,6 @@ void PanelListModel::removePanels()
             endRemoveRows();
             emit listChanged();
         }
-
     }
 }
 
@@ -40,43 +36,53 @@ quint8 PanelListModel::toCidr(const QString ipv4netmask) const {
     {
         switch(nm.at(i).toInt())
         {
-        case 0x80:
-            netmask_cidr+=1;
-            break;
+            case 0x80:
+                netmask_cidr+=1;
+                break;
 
-        case 0xC0:
-            netmask_cidr+=2;
-            break;
+            case 0xC0:
+                netmask_cidr+=2;
+                break;
 
-        case 0xE0:
-            netmask_cidr+=3;
-            break;
+            case 0xE0:
+                netmask_cidr+=3;
+                break;
 
-        case 0xF0:
-            netmask_cidr+=4;
-            break;
+            case 0xF0:
+                netmask_cidr+=4;
+                break;
 
-        case 0xF8:
-            netmask_cidr+=5;
-            break;
+            case 0xF8:
+                netmask_cidr+=5;
+                break;
 
-        case 0xFC:
-            netmask_cidr+=6;
-            break;
+            case 0xFC:
+                netmask_cidr+=6;
+                break;
 
-        case 0xFE:
-            netmask_cidr+=7;
-            break;
+            case 0xFE:
+                netmask_cidr+=7;
+                break;
 
-        case 0xFF:
-            netmask_cidr+=8;
-            break;
+            case 0xFF:
+                netmask_cidr+=8;
+                break;
 
-        default:
-            return netmask_cidr;
+            default:
+                return netmask_cidr;
         }
     }
     return netmask_cidr;
+}
+void PanelListModel::clearList()
+{
+    for(quint16 i=0; i<mList.size();i++)
+    {
+        beginRemoveRows(QModelIndex(), i, i);
+        mList.remove(i);
+        endRemoveRows();
+    }
+    emit listChanged();
 }
 
 void PanelListModel::addData(const PanelItem &unit)
@@ -84,6 +90,7 @@ void PanelListModel::addData(const PanelItem &unit)
     beginInsertRows(QModelIndex(), rowCount(), rowCount());
     mList.append(unit);
     endInsertRows();
+    this->sort(0, Qt::DescendingOrder);
     emit listChanged();
 }
 
@@ -104,12 +111,23 @@ void PanelListModel::insertData(const PanelItem &unit)
                     mList.at(i).machine != unit.machine ||
                     mList.at(i).ipv4addr != unit.ipv4addr ||
                     mList.at(i).ipv4netmask != unit.ipv4netmask
-              )
+                    )
             {
-                beginRemoveRows(QModelIndex(), i, i);
-                mList.remove(i);
-                endRemoveRows();
-                this->addData(unit);
+                if(unit.hostname == "")
+                {
+                    PanelItem test;
+                    test = unit;
+                    test.hostname = mList.at(i).hostname;
+                    beginRemoveRows(QModelIndex(), i, i);
+                    mList.remove(i);
+                    endRemoveRows();
+                    this->addData(test);
+                } else {
+                    beginRemoveRows(QModelIndex(), i, i);
+                    mList.remove(i);
+                    endRemoveRows();
+                    this->addData(unit);
+                }
             }
             break;
         }
@@ -133,7 +151,7 @@ QVariant PanelListModel::data(const QModelIndex &index, int role) const
 {
     if (index.row() < 0 || index.row() >= mList.count())
         return QVariant();
-/*
+    /*
     const QString &name = mList[index.row()].hostname;
     if (role == HostnameRole)
         return name;
@@ -142,16 +160,16 @@ QVariant PanelListModel::data(const QModelIndex &index, int role) const
     const PanelItem item = mList.at(index.row());
     //const TestItem item = mList[index.row()].hostname;
     switch (role) {
-    case HostnameRole:
-        return QVariant(item.hostname);
-    case MachineRole:
-        return QVariant(item.machine);
-    case MacaddressRole:
-        return QVariant(item.macaddr);
-    case Ipv4addrRole:
-        return QVariant(item.ipv4addr);
-    case Ipv4netmaskRole:
-        return QVariant(this->toCidr(item.ipv4netmask));
+        case HostnameRole:
+            return QVariant(item.hostname);
+        case MachineRole:
+            return QVariant(item.machine);
+        case MacaddressRole:
+            return QVariant(item.macaddr);
+        case Ipv4addrRole:
+            return QVariant(item.ipv4addr);
+        case Ipv4netmaskRole:
+            return QVariant(this->toCidr(item.ipv4netmask));
     }
 
     return QVariant();
@@ -175,8 +193,7 @@ QHash<int, QByteArray> PanelListModel::roleNames() const
 /******************** FilterProxyModel **************************/
 FilterProxyModel::FilterProxyModel(QObject *parent)
     : QSortFilterProxyModel(parent)
-{
-
+{    
 #if QT_VERSION >= 0x050A00
     mRandomNum = (quint8) ( QRandomGenerator::global()->generate()  % 100);
 #else
@@ -207,7 +224,7 @@ void FilterProxyModel::copyIpToClipboard(QString ipadr)
 }
 QString FilterProxyModel::getVersion()
 {
-    return "v2.1";
+    return "v2.2";
 }
 quint8 FilterProxyModel::getRandomNum() const
 {
