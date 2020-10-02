@@ -76,10 +76,11 @@ quint8 PanelListModel::toCidr(const QString ipv4netmask) const {
 }
 void PanelListModel::clearList()
 {
-    for(quint16 i=0; i<mList.size();i++)
+    quint16 size = mList.size();
+    for(quint16 i=0; i<size;i++)
     {
-        beginRemoveRows(QModelIndex(), i, i);
-        mList.remove(i);
+        beginRemoveRows(QModelIndex(), size-i-1, size-i-1);
+        mList.remove(size-i-1);
         endRemoveRows();
     }
     emit listChanged();

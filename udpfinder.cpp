@@ -157,6 +157,6 @@ void UdpFinder::testString(QString string)
     qDebug() << "Selected interface NUM: " << QString("%1").arg((quint16)m_SelectedInterface, 0, 10).toUpper();
     mcase = 0;
     m_RunningInterface = 0;
-    //mPanelListModel->clearList();
-    mtimer->setInterval(1000);
+    mPanelListModel->clearList();
+    mtimer->setInterval(100);
 }
