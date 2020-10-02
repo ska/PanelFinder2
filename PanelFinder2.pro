@@ -33,3 +33,5 @@ DISTFILES += \
 # Default rules for deployment.
 target.path = /home/admin
 INSTALLS += target
+
+RC_ICONS = "icon.ico"
