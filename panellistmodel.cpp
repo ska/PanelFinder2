@@ -225,7 +225,11 @@ void FilterProxyModel::copyIpToClipboard(QString ipadr)
 }
 QString FilterProxyModel::getVersion()
 {
-    return "v2.2";
+    return SW_VER;
+}
+QString FilterProxyModel::getName()
+{
+    return SW_NAME;
 }
 quint8 FilterProxyModel::getRandomNum() const
 {

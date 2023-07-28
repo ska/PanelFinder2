@@ -1,13 +1,46 @@
-#include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QApplication>
 #include <QQmlContext>
+#include <QFileInfo>
+#include <QMenu>
+#include <QMessageBox>
 
 #include "panellistmodel.h"
+#include "systemtray.h"
 #include "udpfinder.h"
+#include "runguard.h"
+#include "common.h"
 
 int main(int argc, char *argv[])
 {
-    QGuiApplication app(argc, argv);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+#endif
+    QApplication app(argc, argv);
+    QCoreApplication::setApplicationName(SW_NAME);
+    QCoreApplication::setApplicationVersion(SW_VER);
+    QFileInfo fi(argv[0]);
+
+    qInfo().noquote() << fi.fileName() << " SW Build name: "    << SW_NAME;
+    qInfo().noquote() << fi.fileName() << " Build version: "    << SW_VER;
+
+    app.setWindowIcon(QIcon(":/pics/icon.ico"));
+    app.setQuitOnLastWindowClosed(false);
+
+#ifdef RUNGUARD_H
+    /* One instance only
+     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+    RunGuard guard( "76c23839795022fc167bde920c208549" );
+    if ( !guard.tryToRun() )
+    {
+        QMessageBox msgBox;
+        msgBox.setText("Application already running.\nCheck trayicon.");
+        msgBox.exec();
+
+        qFatal("Application already running");
+        return -1;
+    }
+#endif
 
     QClipboard *clipboard = QGuiApplication::clipboard();
 
@@ -33,9 +66,15 @@ int main(int argc, char *argv[])
     context->setContextProperty("udpfinderModel", &netIfModel);
     context->setContextProperty("udpfinderQml", udpfinder);
 
+    SystemTray * systemTray = new SystemTray();
+    context->setContextProperty("systemTray", systemTray);
+
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty())
         return -1;
 
-    return app.exec();
+    int ret = app.exec();
+    qInfo() << fi.fileName() << " Closing!!!";
+    systemTray->hideIconTray();
+    return ret;
 }

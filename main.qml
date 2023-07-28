@@ -1,14 +1,60 @@
-import QtQuick 2.4
-import QtQuick.Controls 1.2
-import QtQuick.Layouts 1.0
-import QtQuick.Controls.Styles 1.2
+import QtQuick
+import QtQuick.Layouts
+import QtQuick.Controls
 
 ApplicationWindow {
     id: appWindow
     visible: true
     width: 750
     height: 500
-    title: qsTr("Exor Panel finder " + "" + filterModelQml.getVersion() )
+    title: qsTr(filterModelQml.getName() + " - V" + filterModelQml.getVersion() )
+
+    property bool ignoreCheck: false
+    property bool showMessage: true
+
+    Connections {
+        target: systemTray
+        function onSignalShow()
+        {
+            appWindow.show();
+        }
+
+        function onSignalQuit()
+        {
+            ignoreCheck = true
+            close();
+        }
+
+        function onSignalIconActivated()
+        {
+            if(appWindow.visibility === Window.Hidden)
+            {
+                appWindow.show()
+            } else {
+                if(showMessage)
+                {
+                    showMessage =false
+                    systemTray.showHideMessage()
+                }
+                appWindow.hide()
+            }
+        }
+
+    }
+
+    onClosing: {
+        if(ignoreCheck === false)
+        {
+            if(showMessage)
+            {
+                showMessage =false
+                systemTray.showHideMessage()
+            }
+            appWindow.hide()
+        } else {
+            Qt.quit()
+        }
+    }
 
     Rectangle {
         anchors.top: parent.top;
@@ -48,9 +94,10 @@ ApplicationWindow {
     }
 
     Rectangle {
-        anchors.bottom: parent.bottom;
+        //anchors.bottom: parent.bottom;
+        anchors.bottom: statusBar.top
         width: parent.width
-        height: 40
+        height: 34
         color: "darkgray";
         z: 2
 
@@ -84,14 +131,29 @@ ApplicationWindow {
         }
     }
 
-    statusBar: StatusBar {
+    Rectangle {
+        id: statusBar
+        anchors.bottom: parent.bottom;
+        width: parent.width
+        height: 16
+        color: "gray"
+        smooth: true
+        gradient:
+            Gradient {
+            GradientStop { position: 0.0; color: "gray" }
+            GradientStop { position: 1.0; color: "darkgray" }
+        }
+
+        z: 2
         RowLayout {
-            height: 40;
             anchors.fill: parent
+            anchors.centerIn: parent
             Label {
                 id: statusBarLabel
+                color: "white"
                 text: "Waiting.. ("+filterModelQml.getRandomNum()+")"
             }
         }
     }
 }
+

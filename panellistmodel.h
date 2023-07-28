@@ -11,6 +11,7 @@
 #if QT_VERSION >= 0x050A00
 #include <QRandomGenerator>
 #endif
+#include "common.h"
 
 
 struct PanelItem
@@ -70,6 +71,7 @@ public:
     Q_INVOKABLE void setFilterString(QString string);
     Q_INVOKABLE void copyIpToClipboard(QString ipadr);
     Q_INVOKABLE QString getVersion();
+    Q_INVOKABLE QString getName();
     Q_INVOKABLE quint8 getRandomNum() const;
 
     QClipboard *mclipboard;

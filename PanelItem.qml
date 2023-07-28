@@ -12,7 +12,9 @@ Rectangle{
     anchors.topMargin: 10;
 
     onParentChanged: {
-        statusBarLabel.text = "Found " + filterModelQml.rowCount() + " panels"
+        var panels = filterModelQml.rowCount();
+        statusBarLabel.text = "Found " + panels + " panels"
+        systemTray.updateTooltip(panels)
     }
 
     gradient:
