@@ -5,6 +5,7 @@
 #include <QMenu>
 #include <QMessageBox>
 
+#include "stonkamudpmulticast.h"
 #include "panellistmodel.h"
 #include "systemtray.h"
 #include "udpfinder.h"
@@ -57,6 +58,10 @@ int main(int argc, char *argv[])
     UdpFinder *udpfinder = new UdpFinder();
     udpfinder->setPanelList(&listModel);
 
+    StonkamUdpMulticast *st = new StonkamUdpMulticast();
+    st->setPanelList(&listModel);
+    st->startSearchTimer();
+
     QQmlApplicationEngine engine;
     QQmlContext* context = engine.rootContext();
     context->setContextProperty("filterModelQml", &filterModel);
@@ -76,5 +81,10 @@ int main(int argc, char *argv[])
     int ret = app.exec();
     qInfo() << fi.fileName() << " Closing!!!";
     systemTray->hideIconTray();
+
+
+    delete(st);
+    st = nullptr;
+
     return ret;
 }

@@ -12,6 +12,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Widgets)
 
+add_definitions(-DUSE_SSL)
+
 set(PROJECT_SOURCES
     main.cpp
     common.h
@@ -22,11 +24,13 @@ set(PROJECT_SOURCES
     qml.qrc
 )
 
-
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+
+    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/resources/PanelFinder2.rc")
     qt_add_executable(PanelFinder2
         MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
+        ${PROJECT_SOURCES} ${app_icon_resource_windows}
+        stonkamudpmulticast.h stonkamudpmulticast.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET PanelFinder2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -65,3 +69,5 @@ if(QT_VERSION_MAJOR EQUAL 6)
     qt_import_qml_plugins(PanelFinder2)
     qt_finalize_executable(PanelFinder2)
 endif()
+
+

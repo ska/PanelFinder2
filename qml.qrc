@@ -21,5 +21,7 @@
         <file>pics/on3r.png</file>
         <file>pics/windows.png</file>
         <file>pics/emb.png</file>
+        <file>pics/ipcamera.png</file>
+        <file>pics/lakitu.png</file>
     </qresource>
 </RCC>

@@ -2,6 +2,7 @@ import QtQuick 2.0
 import QtQuick.Window 2.12
 import QtQuick.Controls 2.12
 
+
 Rectangle{
     id: panelItem;
     border.width: 1
@@ -10,6 +11,16 @@ Rectangle{
     radius: 4
     smooth: true
     anchors.topMargin: 10;
+
+    function getSettingsLink(panel)
+    {
+
+        if (panel.machine == "IPCamera" )
+            return "http://"+panel.ipv4addr+":8080/"
+        else
+            return "https://"+panel.ipv4addr+"/machine_config/"
+    }
+
 
     onParentChanged: {
         var panels = filterModelQml.rowCount();
@@ -70,6 +81,8 @@ Rectangle{
                 case "KnS02":
                     settingsImageContainer.visible = false;
                     return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushV.png" : "qrc:/pics/emb.png";
+                case "IPCamera":
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/lakitu.png" : "qrc:/pics/ipcamera.png";
 
                 default:
                     return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushB.png" : "qrc:/pics/exb.png";
@@ -151,7 +164,8 @@ Rectangle{
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: { Qt.openUrlExternally("https://"+panelItem.ipv4addr+"/machine_config/") }
+                    onClicked: { Qt.openUrlExternally( getSettingsLink(panelItem) ) }
+
                     onEntered: {
                         panelItem.oldtext = statusBarLabel.text
                         statusBarLabel.text = "Open system settings on "+panelItem.ipv4addr
