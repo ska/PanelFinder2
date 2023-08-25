@@ -23,7 +23,7 @@ QString StonkamUdpMulticast::getMacForIP(QString ipAddress)
 StonkamUdpMulticast::StonkamUdpMulticast()
 {
     bool ret;
-    qDebug() << Q_FUNC_INFO << "Enter";
+    //qDebug() << Q_FUNC_INFO << "Enter";
     m_groupAddress4 = QHostAddress("239.255.255.255");
     m_udpSocket4 = new QUdpSocket();
     m_udpSocket4->setProxy(QNetworkProxy::NoProxy);
@@ -39,7 +39,7 @@ StonkamUdpMulticast::StonkamUdpMulticast()
 
     for (int i = 0; i < mListIfaces.length(); ++i) {
         bool rez = m_udpSocket4->joinMulticastGroup(m_groupAddress4, mListIfaces.at(i));
-        qDebug() << rez;
+        //qDebug() << rez;
     }
 
 
@@ -52,14 +52,14 @@ StonkamUdpMulticast::StonkamUdpMulticast()
 
 StonkamUdpMulticast::~StonkamUdpMulticast()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     bool ret = false;
     ret = m_udpSocket4->leaveMulticastGroup(m_groupAddress4);
 
     QList<QNetworkInterface> mListIfaces = QNetworkInterface::allInterfaces();
     for (int i = 0; i < mListIfaces.length(); ++i) {
         bool rez = m_udpSocket4->leaveMulticastGroup(m_groupAddress4, mListIfaces.at(i));
-        qDebug() << rez;
+        //qDebug() << rez;
     }
 
     qInfo() << "m_udpSocket4->leaveMulticastGroup: " << ret;
@@ -68,7 +68,7 @@ StonkamUdpMulticast::~StonkamUdpMulticast()
     delete m_udpSocket4;
     m_udpSocket4 = nullptr;
 
-    qDebug() << Q_FUNC_INFO << " END";
+    //qDebug() << Q_FUNC_INFO << " END";
 }
 
 void StonkamUdpMulticast::setPanelList(PanelListModel *pl)
@@ -79,7 +79,7 @@ void StonkamUdpMulticast::setPanelList(PanelListModel *pl)
 
 void StonkamUdpMulticast::startSearch()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     if(mtimer->interval() < 1000)
         mtimer->setInterval(5000);
 
@@ -92,7 +92,7 @@ void StonkamUdpMulticast::startSearch()
 
 void StonkamUdpMulticast::startSearchTimer()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     mtimer = new QTimer(this);
     connect(mtimer, SIGNAL(timeout()), this, SLOT(startSearch()));
     mtimer->start(100);
@@ -101,7 +101,7 @@ void StonkamUdpMulticast::startSearchTimer()
 
 void StonkamUdpMulticast::processPendingDatagrams()
 {
-    qDebug() << Q_FUNC_INFO;
+    //qDebug() << Q_FUNC_INFO;
     QHostAddress sender;
     quint16 senderPort;
     PanelItem tmpC;
@@ -157,7 +157,6 @@ void StonkamUdpMulticast::processPendingDatagrams()
             }
         }
 
-        qDebug() << "*** IPAddress: " << tmpC.ipv4addr;
         if(mPanelListModel && tmpC.ipv4addr != "")
         {
             tmpC.macaddr = getMacForIP( tmpC.ipv4addr );
