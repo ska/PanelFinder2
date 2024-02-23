@@ -21,6 +21,7 @@ set(PROJECT_SOURCES
     systemtray.cpp systemtray.h
     udpfinder.cpp udpfinder.h
     runguard.cpp runguard.h
+    serviceudp.cpp serviceudp.h
     qml.qrc
 )
 
@@ -46,6 +47,7 @@ else()
     else()
         add_executable(PanelFinder2
           ${PROJECT_SOURCES}
+          serviceudp.h serviceudp.cpp
         )
     endif()
 endif()

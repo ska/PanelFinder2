@@ -40,6 +40,7 @@ UdpFinder::UdpFinder(QObject *parent)
     connect(mtimer, SIGNAL(timeout()), this, SLOT(scanCmd()));
     mtimer->start(100);
 
+    msocket= nullptr;
 }
 
 void UdpFinder::setPanelList(PanelListModel *pl)
@@ -54,7 +55,9 @@ void UdpFinder::scanCmd()
 
     if(msocket && !msocket->hasPendingDatagrams())
     {
+        disconnect(msocket, SIGNAL(readyRead()), this, SLOT(readyRead()));
         msocket->close();
+        delete msocket;
         msocket = nullptr;
     }
 
@@ -76,47 +79,12 @@ void UdpFinder::scanCmd()
     QByteArray Data;
     Data.clear();
 
-    //qDebug() << "m_SelectedInterface: " << m_SelectedInterface;
-    //qDebug() << "mcase: " << mcase << "m_RunningInterface: " << m_RunningInterface;
-    qint64 ret = 0;
-
-#ifdef TEST
-    switch(mcase)
-    {
-        case 0:
-            Data.append("WhereAreYou.02!");
-            ret = msocket->writeDatagram(Data, Data.size(), QHostAddress::Broadcast, 991);
-            mcase++;
-            break;
-
-        case 1:
-            Data.append("WhereAreYou.01!");
-            ret = msocket->writeDatagram(Data, Data.size(), QHostAddress::Broadcast, 991);
-            mcase++;
-            break;
-
-        case 2:
-            Data.append("WhereAreYou.02");
-            ret = msocket->writeDatagram(Data, Data.size(), QHostAddress::Broadcast, 991);
-            mcase++;
-
-        default:
-            mcase = 0;
-            if(m_SelectedInterface == 0)
-            {
-                m_RunningInterface ++;
-            }
-            break;
-    }
-#else
     Data.append("WhereAreYou.02");
     msocket->writeDatagram(Data,QHostAddress::Broadcast,991);
     if(m_SelectedInterface == 0)
     {
         m_RunningInterface ++;
     }
-#endif
-
 }
 
 void UdpFinder::readyRead()
@@ -144,6 +112,7 @@ void UdpFinder::readyRead()
         if(mPanelListModel)
             mPanelListModel->insertData({hostName, moduleName, mac, ip, netmask, QDateTime::currentSecsSinceEpoch()});
     }
+
 }
 
 QStringList UdpFinder::ipaddr() const

@@ -11,6 +11,7 @@
 #include "udpfinder.h"
 #include "runguard.h"
 #include "common.h"
+#include "serviceudp.h"
 
 int main(int argc, char *argv[])
 {
@@ -28,17 +29,25 @@ int main(int argc, char *argv[])
     app.setWindowIcon(QIcon(":/pics/icon.ico"));
     app.setQuitOnLastWindowClosed(false);
 
+#ifdef SERVICEUDP_H
+    ServiceUDP serviceUDP;
+#endif
+
 #ifdef RUNGUARD_H
     /* One instance only
      * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
     RunGuard guard( "76c23839795022fc167bde920c208549" );
     if ( !guard.tryToRun() )
     {
+#ifdef SERVICEUDP_H
+        serviceUDP.sayAlreadyRunning();
+#else
         QMessageBox msgBox;
         msgBox.setText("Application already running.\nCheck trayicon.");
         msgBox.exec();
+#endif
 
-        qFatal("Application already running");
+        qCritical("Application already running");
         return -1;
     }
 #endif
@@ -57,11 +66,11 @@ int main(int argc, char *argv[])
     //Create udp obj
     UdpFinder *udpfinder = new UdpFinder();
     udpfinder->setPanelList(&listModel);
-
+/*
     StonkamUdpMulticast *st = new StonkamUdpMulticast();
     st->setPanelList(&listModel);
     st->startSearchTimer();
-
+*/
     QQmlApplicationEngine engine;
     QQmlContext* context = engine.rootContext();
     context->setContextProperty("filterModelQml", &filterModel);
@@ -70,9 +79,12 @@ int main(int argc, char *argv[])
     netIfModel.setStringList(udpfinder->ipaddr());
     context->setContextProperty("udpfinderModel", &netIfModel);
     context->setContextProperty("udpfinderQml", udpfinder);
+    //context->setContextProperty("stonkamUdpMulticast", st);
+
 
     SystemTray * systemTray = new SystemTray();
     context->setContextProperty("systemTray", systemTray);
+    context->setContextProperty("serviceUDP", &serviceUDP);
 
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty())
@@ -83,8 +95,8 @@ int main(int argc, char *argv[])
     systemTray->hideIconTray();
 
 
-    delete(st);
-    st = nullptr;
+    //delete(st);
+    //st = nullptr;
 
     return ret;
 }

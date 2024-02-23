@@ -44,7 +44,7 @@ void SystemTray::hideIconTray()
 
 void SystemTray::updateTooltip(quint16 p) const
 {
-    trayIcon->setToolTip(QString("PanelFinder3 \nFound %1 panels").arg(p) );
+    trayIcon->setToolTip(QString("PanelFinder2 \nFound %1 panels").arg(p) );
 }
 
 void SystemTray::showHideMessage() const
@@ -53,5 +53,5 @@ void SystemTray::showHideMessage() const
                       "system tray. To terminate the program, "
                       "choose Quit in the context menu "
                       "of the system tray entry.";
-    trayIcon->showMessage(SW_NAME, message, QIcon(":/pics/icon.ico"), 1 * 1000);
+    trayIcon->showMessage(SW_NAME, message, QIcon(":/pics/icon.ico"), 1 * 100);
 }

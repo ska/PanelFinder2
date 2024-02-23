@@ -1,6 +1,6 @@
-import QtQuick
-import QtQuick.Layouts
-import QtQuick.Controls
+import QtQuick 2.12
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 
 ApplicationWindow {
     id: appWindow
@@ -23,11 +23,12 @@ ApplicationWindow {
         {
             ignoreCheck = true
             close();
+            Qt.quit()
         }
 
         function onSignalIconActivated()
         {
-            if(appWindow.visibility === Window.Hidden)
+            if(appWindow.visibility === 0 /*Window.Hidden*/)
             {
                 appWindow.show()
             } else {
@@ -40,6 +41,14 @@ ApplicationWindow {
             }
         }
 
+    }
+
+    Connections {
+        target: serviceUDP
+        function onGuiMaximize()
+        {
+            appWindow.show();
+        }
     }
 
     onClosing: {
@@ -126,6 +135,7 @@ ApplicationWindow {
 
                 onCurrentIndexChanged: {
                     udpfinderQml.testString( currentIndex )
+                    //stonkamUdpMulticast.testString( currentIndex )
                 }
             }
         }
