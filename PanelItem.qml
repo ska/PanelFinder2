@@ -5,6 +5,7 @@ import QtQuick.Controls 2.12
 
 Rectangle{
     id: panelItem;
+    objectName: "panelItem"
     border.width: 1
     border.color: "#888"
     color: "lightgray"
@@ -14,17 +15,23 @@ Rectangle{
 
     function getSettingsLink(panel)
     {
-
-        if (panel.machine == "IPCamera" )
-            return "http://"+panel.ipv4addr+":8080/"
+        if(panel.hostname == "Stonkam")
+            return "http://"+panel.ipv4addr+"/"
         else
             return "https://"+panel.ipv4addr+"/machine_config/"
+    }
+
+    function getCameraSettingsLink(panel)
+    {
+        return "http://"+panel.ipv4addr+"/"
     }
 
 
     onParentChanged: {
         var panels = filterModelQml.rowCount();
-        statusBarLabel.text = "Found " + panels + " panels"
+        statusBarLabel.text = "Found " + panels + " devices"
+        console.log( parent.objectName )
+        console.log( statusBarLabel.text )
         systemTray.updateTooltip(panels)
     }
 
@@ -40,6 +47,64 @@ Rectangle{
     property string ipv4addr
     property string ipv4netmask
     property string oldtext
+    property string mainosVer
+    property string configosVer
+    property string serialNo
+
+    Popup {
+        id: infoPopup
+
+        x: infoImageContainer.x-width+(infoImageContainer.width*2)
+        y: 4//panelItem.height - 37;
+        width: parent.width* 0.75
+        height: 60
+        modal: false
+        focus: false
+        opacity: 0.95
+        closePolicy: Popup.NoAutoClose
+
+        Text {
+            id: mainosText
+            text: "M: " + panelItem.mainosVer;
+            horizontalAlignment: Text.AlignLeft
+            font.pointSize: 9
+            font.bold: true
+            color: "white"
+            anchors.left: parent.left;
+            anchors.leftMargin: 2;
+            anchors.top: parent.top;
+            anchors.topMargin: -3;
+        }
+        Text {
+            id: configosText
+            text: "C: " + panelItem.configosVer;
+            horizontalAlignment: Text.AlignLeft
+            font.pointSize: 9
+            font.bold: true
+            color: "white"
+            anchors.left: parent.left;
+            anchors.leftMargin: 2;
+            anchors.top: mainosText.bottom;
+            anchors.topMargin: 0;
+        }
+        Text {
+            id: serialText
+            text: "SN: " + panelItem.serialNo;
+            horizontalAlignment: Text.AlignLeft
+            font.pointSize: 9
+            font.bold: true
+            color: "white"
+            anchors.left: parent.left;
+            anchors.leftMargin: 2;
+            anchors.top: configosText.bottom;
+            anchors.topMargin: 0;
+        }
+        background: Rectangle {
+            color: "#888"
+            border.color: "black"
+        }
+    }
+
 
     Rectangle
     {
@@ -54,6 +119,9 @@ Rectangle{
         Image {
             width: parent.width
             height: parent.height
+
+
+
             source: {
                 switch(panelItem.machine)
                 {
@@ -72,20 +140,20 @@ Rectangle{
                     return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushR.png" : "qrc:/pics/exr.png";
                 case "UN75":
                     return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushV.png" : "qrc:/pics/on3r.png";
-                case "KuS01":
-                case "KuS02":
-                case "KuS03":
-                case "KuS04":
-                case "KuS05":
-                case "KnS01":
-                case "KnS02":
-                    settingsImageContainer.visible = false;
-                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushV.png" : "qrc:/pics/emb.png";
                 case "IPCamera":
+                    settingsImageContainer.visible = true;
+                    rebootImageContainer.visible = false;
+                    infoImageContainer.visible = false;
+                    copyipImageContainer.anchors.right = textContainer.right
+                    settingsImageContainer.anchors.right = textContainer.right
                     return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/lakitu.png" : "qrc:/pics/ipcamera.png";
 
                 default:
-                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushB.png" : "qrc:/pics/exb.png";
+                    settingsImageContainer.visible = false;
+                    rebootImageContainer.visible = false;
+                    infoImageContainer.visible = false;
+                    copyipImageContainer.anchors.right = textContainer.right
+                    return filterModelQml.getRandomNum() >= 95 ? "qrc:/pics/mushV.png" : "qrc:/pics/linux.png";
                 }
             }
         }
@@ -104,7 +172,7 @@ Rectangle{
         Text {
             id: hostnameText
             text: panelItem.hostname;
-            horizontalAlignment: Text.left
+            horizontalAlignment: Text.AlignLeft
             font.pointSize: 10
             color: "white"
             anchors.left: textContainer.left;
@@ -115,7 +183,7 @@ Rectangle{
         Text {
             id: macaddrText
             text: panelItem.macaddr;
-            horizontalAlignment: Text.left
+            horizontalAlignment: Text.AlignLeft
             font.pointSize: 8
             color: "gray"
             anchors.left: textContainer.left;
@@ -127,7 +195,7 @@ Rectangle{
         Text {
             id: machineText
             text: panelItem.machine;
-            horizontalAlignment: Text.left
+            horizontalAlignment: Text.AlignLeft
             font.pointSize: 8
             color: "gray"
             anchors.left: textContainer.left;
@@ -138,7 +206,7 @@ Rectangle{
         Text {
             id: ipv4addrText
             text: panelItem.ipv4addr + "/" + panelItem.ipv4netmask;
-            horizontalAlignment: Text.left
+            horizontalAlignment: Text.AlignLeft
             font.pointSize: 8
             color: "gray"
             anchors.left: textContainer.left;
@@ -146,13 +214,14 @@ Rectangle{
             anchors.leftMargin: 10;
         }
 
+
         Rectangle
         {
-            id: settingsImageContainer
+            id: infoImageContainer
             anchors.right: parent.right
-            anchors.rightMargin: 5
-            anchors.bottom: parent.bottom
-            anchors.bottomMargin: 2
+            anchors.rightMargin: 3
+            anchors.top: parent.top
+            anchors.topMargin: 2
             height: 25
             width: height
             color: "transparent"
@@ -160,19 +229,12 @@ Rectangle{
             Image {
                 width: parent.width
                 height: parent.height
-                source: "qrc:/pics/settingsGR.png"
+                source: "qrc:/pics/info2GR.png"
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
-                    onClicked: { Qt.openUrlExternally( getSettingsLink(panelItem) ) }
-
-                    onEntered: {
-                        panelItem.oldtext = statusBarLabel.text
-                        statusBarLabel.text = "Open system settings on "+panelItem.ipv4addr
-                    }
-                    onExited: {
-                        statusBarLabel.text = panelItem.oldtext;
-                    }
+                    onEntered: {infoPopup.open()}
+                    onExited:  {infoPopup.close()}
                 }
             }
         }
@@ -180,7 +242,7 @@ Rectangle{
         Rectangle
         {
             id: copyipImageContainer
-            anchors.right: parent.right
+            anchors.right: infoImageContainer.left
             anchors.rightMargin: 5
             anchors.top: parent.top
             anchors.topMargin: 2
@@ -207,5 +269,72 @@ Rectangle{
                 }
             }
         }
+
+
+        Rectangle
+        {
+            id: rebootImageContainer
+            anchors.right: parent.right
+            anchors.rightMargin: 3
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 2
+            height: 25
+            width: height
+            color: "transparent"
+
+            Image {
+                width: parent.width
+                height: parent.height
+                source: "qrc:/pics/rebootGR.png"
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: {
+                        workingIp = panelItem.ipv4addr
+                        rebootPopup.open();
+                    }
+                    onEntered: {
+                        panelItem.oldtext = statusBarLabel.text
+                        statusBarLabel.text = "Reboot "+panelItem.ipv4addr
+                    }
+                    onExited: {
+                        statusBarLabel.text = panelItem.oldtext;
+                    }
+                }
+            }
+        }
+
+
+        Rectangle
+        {
+            id: settingsImageContainer
+            anchors.right: rebootImageContainer.left
+            anchors.rightMargin: 5
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 2
+            height: 25
+            width: height
+            color: "transparent"
+
+            Image {
+                width: parent.width
+                height: parent.height
+                source: "qrc:/pics/settingsGR.png"
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: { Qt.openUrlExternally(getSettingsLink(panelItem)) }
+
+                    onEntered: {
+                        panelItem.oldtext = statusBarLabel.text
+                        statusBarLabel.text = "Open system settings on "+panelItem.ipv4addr
+                    }
+                    onExited: {
+                        statusBarLabel.text = panelItem.oldtext;
+                    }
+                }
+            }
+        }
+
     }
 }

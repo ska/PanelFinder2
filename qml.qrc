@@ -23,5 +23,9 @@
         <file>pics/emb.png</file>
         <file>pics/ipcamera.png</file>
         <file>pics/lakitu.png</file>
+        <file>pics/info2GR.png</file>
+        <file>pics/rebootGR.png</file>
+        <file>pics/linux.png</file>
+        <file>pics/easter-rabbit.png</file>
     </qresource>
 </RCC>

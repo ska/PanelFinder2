@@ -9,6 +9,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Widgets)
 
@@ -31,7 +32,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(PanelFinder2
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES} ${app_icon_resource_windows}
-        stonkamudpmulticast.h stonkamudpmulticast.cpp
+        newstonkamudpmulticast.h newstonkamudpmulticast.cpp
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET PanelFinder2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -62,6 +64,14 @@ set_target_properties(PanelFinder2 PROPERTIES
     MACOSX_BUNDLE TRUE
     WIN32_EXECUTABLE TRUE
 )
+
+message(STATUS "Build ${PROJECT_NAME} in ${CMAKE_BUILD_TYPE} mode")
+
+#target_compile_definitions(PanelFinder2 PRIVATE QT_DEBUG_NO_OUTPUT)
+string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
+if (build_type STREQUAL release)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC QT_NO_DEBUG_OUTPUT)
+endif()
 
 install(TARGETS PanelFinder2
     BUNDLE DESTINATION .

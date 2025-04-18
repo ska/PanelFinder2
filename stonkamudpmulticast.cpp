@@ -14,7 +14,7 @@ QString StonkamUdpMulticast::getMacForIP(QString ipAddress)
         QStringList list = result.split(QRegularExpression("\\s+"));
         if(list.contains(ipAddress))
             MAC = list.at(list.indexOf(ipAddress) + 11);
-        MAC = MAC.replace('-', ':');
+        MAC = MAC.replace('-', "");
     }
 
     return MAC;
@@ -22,8 +22,28 @@ QString StonkamUdpMulticast::getMacForIP(QString ipAddress)
 
 StonkamUdpMulticast::StonkamUdpMulticast()
 {
+    m_udpSocket4 = nullptr;
+    setMulticast();
+}
+
+StonkamUdpMulticast::~StonkamUdpMulticast()
+{
+    QList<QNetworkInterface> mListIfaces = QNetworkInterface::allInterfaces();
+    for (int i = 0; i < mListIfaces.length(); ++i)
+    {
+        m_udpSocket4->leaveMulticastGroup(m_groupAddress4, mListIfaces.at(i));
+    }
+
+    disconnect(m_udpSocket4, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()));
+    m_udpSocket4->abort();
+    delete m_udpSocket4;
+    m_udpSocket4 = nullptr;
+}
+
+
+void StonkamUdpMulticast::setMulticast()
+{
     bool ret;
-    //qDebug() << Q_FUNC_INFO << "Enter";
     m_groupAddress4 = QHostAddress("239.255.255.255");
     m_udpSocket4 = new QUdpSocket();
     m_udpSocket4->setProxy(QNetworkProxy::NoProxy);
@@ -34,42 +54,15 @@ StonkamUdpMulticast::StonkamUdpMulticast()
 
     m_udpSocket4->setSocketOption(QAbstractSocket::MulticastTtlOption, 255);
 
-    //ret = m_udpSocket4->joinMulticastGroup(m_groupAddress4);
     QList<QNetworkInterface> mListIfaces = QNetworkInterface::allInterfaces();
-
-    for (int i = 0; i < mListIfaces.length(); ++i) {
-        bool rez = m_udpSocket4->joinMulticastGroup(m_groupAddress4, mListIfaces.at(i));
-        //qDebug() << rez;
+    for (int i = 0; i < mListIfaces.length(); ++i)
+    {
+        m_udpSocket4->joinMulticastGroup(m_groupAddress4, mListIfaces.at(i));
     }
-
-
-    if(!ret)
-        qWarning() << "bind err: " << m_udpSocket4->errorString();
 
     connect(m_udpSocket4, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()));
-
 }
 
-StonkamUdpMulticast::~StonkamUdpMulticast()
-{
-    //qDebug() << Q_FUNC_INFO;
-    bool ret = false;
-    ret = m_udpSocket4->leaveMulticastGroup(m_groupAddress4);
-
-    QList<QNetworkInterface> mListIfaces = QNetworkInterface::allInterfaces();
-    for (int i = 0; i < mListIfaces.length(); ++i) {
-        bool rez = m_udpSocket4->leaveMulticastGroup(m_groupAddress4, mListIfaces.at(i));
-        //qDebug() << rez;
-    }
-
-    qInfo() << "m_udpSocket4->leaveMulticastGroup: " << ret;
-    disconnect(m_udpSocket4, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()));
-    m_udpSocket4->abort();
-    delete m_udpSocket4;
-    m_udpSocket4 = nullptr;
-
-    //qDebug() << Q_FUNC_INFO << " END";
-}
 
 void StonkamUdpMulticast::setPanelList(PanelListModel *pl)
 {
@@ -79,7 +72,25 @@ void StonkamUdpMulticast::setPanelList(PanelListModel *pl)
 
 void StonkamUdpMulticast::startSearch()
 {
-    //qDebug() << Q_FUNC_INFO;
+    qDebug() << Q_FUNC_INFO;
+    bool pending;
+    if(m_udpSocket4)
+        pending = m_udpSocket4->hasPendingDatagrams();
+    qDebug() << Q_FUNC_INFO << "pending: " << pending;
+    if(m_udpSocket4  && !pending)
+    {
+        disconnect(m_udpSocket4, SIGNAL(readyRead()), this, SLOT(processPendingDatagrams()));
+        m_udpSocket4->close();
+        delete m_udpSocket4;
+        m_udpSocket4= nullptr;
+    }
+    qDebug() << Q_FUNC_INFO << " 2";
+
+    if(!m_udpSocket4)
+        setMulticast();
+
+
+    qDebug() << Q_FUNC_INFO << " 3";
     if(mtimer->interval() < 1000)
         mtimer->setInterval(5000);
 
@@ -163,4 +174,11 @@ void StonkamUdpMulticast::processPendingDatagrams()
             mPanelListModel->insertData(tmpC);
         }
     }
+}
+
+void StonkamUdpMulticast::testString(QString string)
+{
+    quint8 m_SelectedInterface;
+    m_SelectedInterface = string.toUInt();
+    qDebug() << "Selected interface NUM: " << QString("%1").arg((quint16)m_SelectedInterface, 0, 10).toUpper();
 }

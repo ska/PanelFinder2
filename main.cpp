@@ -5,13 +5,14 @@
 #include <QMenu>
 #include <QMessageBox>
 
-#include "stonkamudpmulticast.h"
+#include "newstonkamudpmulticast.h"
 #include "panellistmodel.h"
 #include "systemtray.h"
 #include "udpfinder.h"
 #include "runguard.h"
 #include "common.h"
 #include "serviceudp.h"
+
 
 int main(int argc, char *argv[])
 {
@@ -66,21 +67,21 @@ int main(int argc, char *argv[])
     //Create udp obj
     UdpFinder *udpfinder = new UdpFinder();
     udpfinder->setPanelList(&listModel);
-/*
-    StonkamUdpMulticast *st = new StonkamUdpMulticast();
-    st->setPanelList(&listModel);
-    st->startSearchTimer();
-*/
+
+    //Create udp multicast obj
+    NewStonkamUdpMulticast *sk = new NewStonkamUdpMulticast();
+    sk->setCameraList(&listModel);
+
+
     QQmlApplicationEngine engine;
     QQmlContext* context = engine.rootContext();
     context->setContextProperty("filterModelQml", &filterModel);
+    context->setContextProperty("listModelQml", &listModel);
 
     QStringListModel netIfModel;
     netIfModel.setStringList(udpfinder->ipaddr());
     context->setContextProperty("udpfinderModel", &netIfModel);
     context->setContextProperty("udpfinderQml", udpfinder);
-    //context->setContextProperty("stonkamUdpMulticast", st);
-
 
     SystemTray * systemTray = new SystemTray();
     context->setContextProperty("systemTray", systemTray);
@@ -93,10 +94,6 @@ int main(int argc, char *argv[])
     int ret = app.exec();
     qInfo() << fi.fileName() << " Closing!!!";
     systemTray->hideIconTray();
-
-
-    //delete(st);
-    //st = nullptr;
 
     return ret;
 }

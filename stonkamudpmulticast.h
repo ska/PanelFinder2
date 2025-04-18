@@ -18,6 +18,8 @@ public:
     void setPanelList(PanelListModel *pl);
     static QString getMacForIP(QString ipAddress);
 
+    Q_INVOKABLE void testString(QString string);
+
 private slots:
     void startSearch();
     void processPendingDatagrams();
@@ -28,6 +30,7 @@ private:
     QHostAddress m_groupAddress4;
     QStringList m_foundIPCamerasStr;
     PanelListModel *mPanelListModel;
+    void setMulticast();
 };
 
 #endif // STONKAMUDPMULTICAST_H

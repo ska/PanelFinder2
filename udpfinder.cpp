@@ -110,7 +110,7 @@ void UdpFinder::readyRead()
             hostName = QString(QByteArray::fromRawData(tmp2.hostName, sizeof(tmp2.hostName))).trimmed().toLatin1();
 
         if(mPanelListModel)
-            mPanelListModel->insertData({hostName, moduleName, mac, ip, netmask, QDateTime::currentSecsSinceEpoch()});
+            mPanelListModel->insertData({hostName, moduleName, mac, ip, netmask, "", "", "", QDateTime::currentSecsSinceEpoch()});
     }
 
 }

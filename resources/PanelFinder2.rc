@@ -1,10 +1,11 @@
 #include "winver.h"
+#include "../common.h"
 
 IDI_ICON1               ICON    "PanelFinder2.ico"
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 2,5,1
- PRODUCTVERSION 2,5,1
+ FILEVERSION 2,8,1
+ PRODUCTVERSION 2,8,1
  FILEFLAGS 0x0L
  FILEFLAGSMASK 0x3fL
  FILEOS 0x00040004L
@@ -17,12 +18,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "Luigi Scagnet ska@linux.it"
             VALUE "FileDescription", "PanelFinder2"
-            VALUE "FileVersion", "2.5.1"
+            VALUE "FileVersion", SW_VER
             VALUE "LegalCopyright", "GPL"
             VALUE "InternalName", "PanelFinder2"
             VALUE "OriginalFilename", "PanelFinder2.exe"
             VALUE "ProductName", "PanelFinder2"
-            VALUE "ProductVersion", "2.5.1"
+            VALUE "ProductVersion", SW_VER
         END
     END
     BLOCK "VarFileInfo"

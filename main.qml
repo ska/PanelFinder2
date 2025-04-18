@@ -3,9 +3,11 @@ import QtQuick.Layouts 1.15
 import QtQuick.Controls 2.15
 
 ApplicationWindow {
+    property string workingIp
+
     id: appWindow
     visible: true
-    width: 750
+    width: 800
     height: 500
     title: qsTr(filterModelQml.getName() + " - V" + filterModelQml.getVersion() )
 
@@ -65,20 +67,117 @@ ApplicationWindow {
         }
     }
 
+    Popup {
+            id: rebootPopup
+            width: 400
+            height: 200
+            x: (appWindow.width/2)-(width/2);
+            y: (appWindow.height/2)-100;
+            modal: true
+            focus: false
+            opacity: 0.95
+            closePolicy: Popup.NoAutoClose
+
+            GridLayout {
+                id: rebootPopupGrid
+                anchors.fill: parent
+                rows: 2
+                columns: 3
+
+                Rectangle {
+                     Layout.fillHeight: true
+                     Layout.fillWidth: true
+                     Layout.columnSpan: 3
+                     Layout.rowSpan: 1
+                     Layout.row: 0
+                     Layout.column: 0
+                     Text {
+                         anchors.fill: parent
+                         text: qsTr("<b>Confirm\n</n>Restart the system?")
+                     }
+                }
+
+                Rectangle {
+                     Layout.fillHeight: true
+                     Layout.fillWidth: true
+                     Layout.columnSpan: 1
+                     Layout.rowSpan: 1
+                     Layout.row: 1
+                     Layout.column: 0
+
+                     Button {
+                         anchors.fill: parent
+                         text: "ConfigOs"
+                         onClicked: {
+                             listModelQml.rebootConfigOsPanel( workingIp )
+                             workingIp = ""
+                             rebootPopup.close()
+                         }
+                     }
+                }
+
+                Rectangle {
+                     Layout.fillHeight: true
+                     Layout.fillWidth: true
+                     Layout.columnSpan: 1
+                     Layout.rowSpan: 1
+                     Layout.row: 1
+                     Layout.column: 1
+                     Button {
+                         anchors.fill: parent
+                         text: "MainOs"
+                         onClicked: {
+                             listModelQml.rebootMainOsPanel( workingIp )
+                             workingIp = ""
+                             rebootPopup.close()
+                         }
+                     }
+                }
+
+               Rectangle {
+                    color: "red"
+                    Layout.fillHeight: true
+                    Layout.fillWidth: true
+                    Layout.columnSpan: 1
+                    Layout.rowSpan: 1
+                    Layout.row: 1
+                    Layout.column: 2
+                    Button {
+                        anchors.fill: parent
+                        text: "Cancel"
+                        onClicked: rebootPopup.close()
+                    }
+               }
+
+            }
+
+        }
+
+
+
     Rectangle {
         anchors.top: parent.top;
         width: parent.width
         height: parent.height-40
         color: "gray"
 
+        Image {
+             anchors.fill: parent
+             fillMode:  Image.Tile
+             source: "qrc:/pics/easter-rabbit.png"
+             opacity: 0.1
+             visible: filterModelQml.getRandomNum() === 100 ? true : false;
+         }
+
         GridView {
             id: grid
+            objectName: "grid"
             width: parent.width
             height: parent.height
             anchors.top: parent.top;
             anchors.topMargin: 10
             anchors.fill: parent
-            cellWidth: 250
+            cellWidth: 260
             cellHeight: 80
             cacheBuffer: 100
 
@@ -86,7 +185,8 @@ ApplicationWindow {
 
             delegate: Item {
                 id: cellItem
-                width: 240
+                objectName: "cellItem"
+                width: 250
                 height: 75
 
                 PanelItem {
@@ -97,6 +197,9 @@ ApplicationWindow {
                     machine: model.machine
                     ipv4addr: model.ipv4addr
                     ipv4netmask: model.ipv4netmask
+                    mainosVer: model.mainosVer
+                    configosVer: model.configosVer
+                    serialNo: model.serialNo
                 }
             }
         }

@@ -1,10 +1,11 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+//Modificare anche file RC
 #define SW_NAME     "PanelFinder2"
 #define VER_MAJ     "2"
-#define VER_MIN     "6"
-#define VER_FIX     "2"
+#define VER_MIN     "8"
+#define VER_FIX     "1"
 
 #define SW_VER      VER_MAJ "." VER_MIN "." VER_FIX
 
