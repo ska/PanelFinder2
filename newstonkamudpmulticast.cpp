@@ -5,73 +5,15 @@
  */
 NewStonkamUdpMulticast::NewStonkamUdpMulticast()
 {
-    QList<QNetworkInterface> interfaces = QNetworkInterface::allInterfaces();
-
-    foreach(QNetworkInterface interface, interfaces)
-    {
-
-        if ( interface.flags().testFlag(QNetworkInterface::IsUp) &&
-             interface.flags().testFlag(QNetworkInterface::IsRunning) &&
-             interface.flags().testFlag(QNetworkInterface::CanMulticast) &&
-            !interface.flags().testFlag(QNetworkInterface::IsLoopBack) &&
-#ifdef Q_OS_LINUX
-              (interface.name().contains("eth", Qt::CaseInsensitive) || interface.name().contains("ens", Qt::CaseInsensitive))
-#else
-               interface.humanReadableName().contains("Ethernet", Qt::CaseInsensitive)
-#endif
-            )
-        {
-            /*
-             * If here Interface is:
-             * - IsUp
-             * - IsRunning
-             * - CanMulticast
-             * - NOT IsLoopBack
-             * - isCopper
-             */
-            qDebug() << "Interface: " << interface.humanReadableName();
-
-            listMC.append(new QUdpSocket());
-            listMC.last()->setSocketOption(QAbstractSocket::LowDelayOption, 1);
-
-            QList<QNetworkAddressEntry> allEntries = interface.addressEntries();
-            QHostAddress toBind; //("192.168.88.20");
-            foreach (QNetworkAddressEntry entry, allEntries)
-            {
-                qDebug() << "  --> " << entry.ip().toString() << "/" << entry.netmask().toString();
-                toBind = entry.ip();
-
-                /* Ip camera sembra accettare le richieste solo se arrivano da porta 2887 dirette a 2887 */
-                if(listMC.last()->bind(toBind, 2887, QUdpSocket::ShareAddress|QUdpSocket::ReuseAddressHint))
-                {
-                    QList<QNetworkAddressEntry> addressEntries = interface.addressEntries();
-                    for (int i = 0; i < addressEntries.length(); i++)
-                    {
-                        QNetworkAddressEntry ae = addressEntries.at(i);
-                        if(ae.ip() == toBind)
-                        {
-                            bool ok = false;
-                            if (ae.ip().protocol() == QAbstractSocket::IPv4Protocol)
-                            {
-                                ok = listMC.last()->joinMulticastGroup(QHostAddress("239.255.255.255"), interface);
-                            }
-                            if(ok)
-                            {
-                                qDebug()<<"  SA bound... join mc group:" << ae.ip();
-                                connect(listMC.last(), &QUdpSocket::readyRead, this, &NewStonkamUdpMulticast::readPendingDatagrams);
-                            }
-                            else
-                            {
-                                qDebug()<<"  SA bound... interface unsuitable for Multicast:"<<ae.ip();
-                            }
-                        }
-                    }
-                } //if(saMC->bind
-            } //foreach (entry, allEntries)
-        } //if flags
-    } //foreach(QNetworkInterface interface, interfaces)
-
     mCameraListModel = nullptr;
+
+    m_socket = new QUdpSocket(this);
+    m_socket->bind(QHostAddress::AnyIPv4,
+                   0,
+                   QUdpSocket::ShareAddress | QUdpSocket::ReuseAddressHint);
+
+    connect(m_socket, &QUdpSocket::readyRead,
+            this, &NewStonkamUdpMulticast::processPendingDatagrams);
 
     m_timer = new QTimer(this);
     connect(m_timer, SIGNAL(timeout()), this, SLOT(sendReq()));
@@ -84,11 +26,12 @@ NewStonkamUdpMulticast::NewStonkamUdpMulticast()
 NewStonkamUdpMulticast::~NewStonkamUdpMulticast()
 {
     qDebug() << Q_FUNC_INFO;
-    for( auto i = 0; i<listMC.length(); i++)
-    {
-        delete( listMC.at(i) );
+    if (m_socket) {
+        m_socket->close();
+        m_socket->disconnect(this);
+        //delete m_socket; //(parent = this)
+        m_socket = nullptr;
     }
-    listMC.clear();
 }
 
 /**
@@ -98,83 +41,123 @@ void NewStonkamUdpMulticast::sendReq()
 {
     if(m_timer->interval() < 1000)
         m_timer->setInterval(1000);
+    startDiscovery();
+}
 
-    for( auto i = 0; i<listMC.length(); i++)
-    {
-        listMC.at(i)->writeDatagram(datagramReq, mcAddr, 2887);
+/**
+ * @brief NewStonkamUdpMulticast::startDiscovery
+ */
+void NewStonkamUdpMulticast::startDiscovery()
+{
+    const QString probe = buildProbe();
+    const QByteArray data = probe.toUtf8();
+
+    //m_timeoutTimer->start();
+
+    for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
+
+        if (!(iface.flags() & QNetworkInterface::IsUp) ||
+            !(iface.flags() & QNetworkInterface::IsRunning) ||
+            (iface.flags() & QNetworkInterface::IsLoopBack))
+            continue;
+
+        for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
+
+            if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol)
+                continue;
+
+            qDebug() << "--> Send onvif probe on if"
+                        << iface.humanReadableName()
+                        << entry.ip().toString();
+
+            m_socket->setMulticastInterface(iface);
+
+            for (int i = 0; i < NUMBER_OF_MULTI_REQ; ++i)
+            {
+                m_socket->writeDatagram(
+                    data,
+                    MCAST_ADDR,
+                    MCAST_PORT);
+            }
+        }
     }
 }
 
 /**
- * @brief NewStonkamUdpMulticast::readPendingDatagrams
+ * @brief NewStonkamUdpMulticast::buildProbe
+ * @return
  */
-void NewStonkamUdpMulticast::readPendingDatagrams()
+QString NewStonkamUdpMulticast::buildProbe() const
 {
-    PanelItem tmpC;
-    for( auto i = 0; i<listMC.length(); i++)
+    const QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
+    return QString(
+               "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+               "<e:Envelope xmlns:e=\"http://www.w3.org/2003/05/soap-envelope\" "
+               "xmlns:w=\"http://schemas.xmlsoap.org/ws/2004/08/addressing\" "
+               "xmlns:d=\"http://schemas.xmlsoap.org/ws/2005/04/discovery\" "
+               "xmlns:dn=\"http://www.onvif.org/ver10/network/wsdl\">"
+               "<e:Header>"
+               "<w:MessageID>uuid:%1</w:MessageID>"
+               "<w:To>urn:schemas-xmlsoap-org:ws:2005:04:discovery</w:To>"
+               "<w:Action>"
+               "http://schemas.xmlsoap.org/ws/2005/04/discovery/Probe"
+               "</w:Action>"
+               "</e:Header>"
+               "<e:Body>"
+               "<d:Probe>"
+               "<d:Types>dn:NetworkVideoTransmitter</d:Types>"
+               "</d:Probe>"
+               "</e:Body>"
+               "</e:Envelope>"
+               ).arg(uuid);
+}
+
+/**
+ * @brief NewStonkamUdpMulticast::processPendingDatagrams
+ */
+void NewStonkamUdpMulticast::processPendingDatagrams()
+{
+    while (m_socket->hasPendingDatagrams())
     {
-        while (listMC.at(i)->hasPendingDatagrams())
-        {
-            QNetworkDatagram datagram = listMC.at(i)->receiveDatagram();
+        QByteArray datagram;
+        datagram.resize(m_socket->pendingDatagramSize());
 
-            if(!QString(datagram.data()).contains("IPAddress", Qt::CaseSensitive))
-                continue;
+        QHostAddress sender;
+        quint16 senderPort;
+        m_socket->readDatagram(datagram.data(),
+                               datagram.size(),
+                               &sender,
+                               &senderPort);
+        QString ip = sender.toString();
 
-            /*XML non standard, aggiungo qualche pezzo per renderlo std e poter usare QXmlStreamReader*/
-            QString dataStr = (QString(datagram.data()));
-            dataStr.replace(QString("?><IP"), QString("?><IPCamera><IP"));
-            dataStr.append("</IPCamera>");
+        QHostAddress netmask = getNetmaskForSender(sender);
 
-            QXmlStreamReader xmlResponse;
-            xmlResponse.addData(dataStr.toUtf8());
-
-            while(!xmlResponse.atEnd() && !xmlResponse.hasError())
-            {
-                QXmlStreamReader::TokenType token = xmlResponse.readNext();
-                //If token is just StartDocument - go to next
-                if(token == QXmlStreamReader::StartDocument) {
-                    continue;
-                }
-                //If token is StartElement - read it
-                if(token == QXmlStreamReader::StartElement)
-                {
-                    tmpC.hostname = "Stonkam";
-                    tmpC.machine  = "IPCamera";
-                    tmpC.foundEpoc= QDateTime::currentSecsSinceEpoch();
-                    tmpC.macaddr  = "";
-                    if(xmlResponse.name().toString() == "IPAddress")
-                    {
-                        QString tmp = xmlResponse.readElementText();
-                        //qDebug() << "Camera IPAddress: " << tmp;
-                        tmpC.ipv4addr = tmp;
-                    }
-
-                    if(xmlResponse.name().toString() == "Gateway")
-                    {
-                        QString tmp = xmlResponse.readElementText();
-                        //qDebug() << "Camera Gateway: " << tmp;
-                    }
-
-                    if(xmlResponse.name().toString() == "Submask")
-                    {
-                        QString tmp = xmlResponse.readElementText();
-                        //qDebug() << "Camera Submask: " << tmp;
-                        tmpC.ipv4netmask = tmp;
-
-                    }
-
-                }
-            }
-
-            if(mCameraListModel && tmpC.ipv4addr != "")
-            {
-                tmpC.macaddr = getMacForIP( tmpC.ipv4addr );
-                if(tmpC.macaddr != "")
-                    mCameraListModel->insertData(tmpC);
-            }
+        QString tmp = "";
+        if (!netmask.isNull()) {
+            qDebug() << "Camera:" << ip
+                     << "Netmask:" << netmask.toString();
+            tmp = netmask.toString();
+        } else {
+            qDebug() << "Camera:" << ip
+                     << "Netmask: non trovata";
         }
-    }
 
+        PanelItem tmpC;
+        tmpC.hostname = "Stonkam";
+        tmpC.machine  = "IPCamera";
+        tmpC.foundEpoc= QDateTime::currentSecsSinceEpoch();
+        tmpC.macaddr  = "";
+        tmpC.ipv4addr = ip;
+        tmpC.ipv4netmask = tmp;
+
+        if(mCameraListModel && tmpC.ipv4addr != "")
+        {
+            tmpC.macaddr = getMacForIP( tmpC.ipv4addr );
+            if(tmpC.macaddr != "")
+                mCameraListModel->insertData(tmpC);
+        }
+
+    }
 }
 
 /**
@@ -199,7 +182,6 @@ QString NewStonkamUdpMulticast::getMacForIP(QString ipAddress)
             return MAC;
         }
 
-
         QStringList list = result.split(regex);
         if(list.contains(ipAddress))
         {
@@ -219,4 +201,32 @@ QString NewStonkamUdpMulticast::getMacForIP(QString ipAddress)
 void NewStonkamUdpMulticast::setCameraList(PanelListModel *pl)
 {
     mCameraListModel = pl;
+}
+
+/**
+ * @brief NewStonkamUdpMulticast::netmaskForSender
+ * @param sender
+ * @return
+ */
+QHostAddress NewStonkamUdpMulticast::getNetmaskForSender(const QHostAddress &sender)
+{
+    for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
+
+        if (!(iface.flags() & QNetworkInterface::IsUp) ||
+            !(iface.flags() & QNetworkInterface::IsRunning) ||
+            (iface.flags() & QNetworkInterface::IsLoopBack))
+            continue;
+
+        for (const QNetworkAddressEntry &entry : iface.addressEntries()) {
+
+            if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol)
+                continue;
+
+            if (entry.ip().isInSubnet(sender, entry.prefixLength())) {
+                return entry.netmask();
+            }
+        }
+    }
+
+    return QHostAddress(); // invalida
 }

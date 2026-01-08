@@ -7,6 +7,11 @@
 #include <QList>
 #include "panellistmodel.h"
 
+static const QHostAddress   MCAST_ADDR("239.255.255.250");
+static const quint16        MCAST_PORT = 3702;
+static const quint16        NUMBER_OF_MULTI_REQ = 1;
+static const quint16        DISCOVERY_TIMEOUT = 500;
+
 class NewStonkamUdpMulticast: public QObject
 {
     Q_OBJECT
@@ -15,20 +20,22 @@ public:
     NewStonkamUdpMulticast();
     ~NewStonkamUdpMulticast();
     void setCameraList(PanelListModel *pl);
+    void startDiscovery();
     static QString getMacForIP(QString ipAddress);
+    static QHostAddress getNetmaskForSender(const QHostAddress &sender);
 
 private slots:
-    void readPendingDatagrams();
     void sendReq();
+    void processPendingDatagrams();
 
 
 private:
-    QList <QUdpSocket*> listMC;
     QTimer              *m_timer;
     PanelListModel      *mCameraListModel;
+    QUdpSocket          *m_socket;
 
-    const QHostAddress  mcAddr = QHostAddress("239.255.255.255");
-    const QByteArray    datagramReq = "<?xml version=\"1.0\" encoding=\"utf-8\"?><Types>stonkam ipsearch</Types>";
+    QString buildProbe() const;
+
 };
 
 #endif // NEWSTONKAMUDPMULTICAST_H
