@@ -30,8 +30,8 @@ Rectangle{
     onParentChanged: {
         var panels = filterModelQml.rowCount();
         statusBarLabel.text = "Found " + panels + " devices"
-        console.log( parent.objectName )
-        console.log( statusBarLabel.text )
+        //console.log( parent.objectName )
+        //console.log( statusBarLabel.text )
         systemTray.updateTooltip(panels)
     }
 

@@ -33,6 +33,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES} ${app_icon_resource_windows}
         newstonkamudpmulticast.h newstonkamudpmulticast.cpp
+        mysplashscreen.h mysplashscreen.cpp
 
     )
 # Define target properties for Android with Qt 6 as:
