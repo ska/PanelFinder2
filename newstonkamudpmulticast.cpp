@@ -128,36 +128,45 @@ void NewStonkamUdpMulticast::processPendingDatagrams()
                                datagram.size(),
                                &sender,
                                &senderPort);
-        QString ip = sender.toString();
 
-        QHostAddress netmask = getNetmaskForSender(sender);
-
-        QString tmp = "";
-        if (!netmask.isNull()) {
-            qDebug() << "Camera:" << ip
-                     << "Netmask:" << netmask.toString();
-            tmp = netmask.toString();
-        } else {
-            qDebug() << "Camera:" << ip
-                     << "Netmask: non trovata";
-        }
-
-        PanelItem tmpC;
-        tmpC.hostname = "Stonkam";
-        tmpC.machine  = "IPCamera";
-        tmpC.foundEpoc= QDateTime::currentSecsSinceEpoch();
-        tmpC.macaddr  = "";
-        tmpC.ipv4addr = ip;
-        tmpC.ipv4netmask = tmp;
-
-        if(mCameraListModel && tmpC.ipv4addr != "")
+        QXmlStreamReader xml(datagram);
+        while (!xml.atEnd())
         {
-            tmpC.macaddr = getMacForIP( tmpC.ipv4addr );
-            if(tmpC.macaddr != "")
-                mCameraListModel->insertData(tmpC);
-        }
+            xml.readNext();
+            if (xml.isStartElement() &&
+                xml.name().toString().contains("XAddrs"))
+            {
+                //const QString xaddr = xml.readElementText();
+                //qDebug() << "  Endpoint ONVIF:" << xaddr << "\n";
+                QString ip = sender.toString();
+                QHostAddress netmask = getNetmaskForSender(sender);
+                QString tmp = "";
+                if (!netmask.isNull()) {
+                    qDebug() << "Camera:" << ip
+                             << "Netmask:" << netmask.toString();
+                    tmp = netmask.toString();
+                } else {
+                    qDebug() << "Camera:" << ip
+                             << "Netmask: non trovata";
+                }
 
-    }
+                PanelItem tmpC;
+                tmpC.hostname = "Stonkam";
+                tmpC.machine  = "IPCamera";
+                tmpC.foundEpoc= QDateTime::currentSecsSinceEpoch();
+                tmpC.macaddr  = "";
+                tmpC.ipv4addr = ip;
+                tmpC.ipv4netmask = tmp;
+
+                if(mCameraListModel && tmpC.ipv4addr != "")
+                {
+                    tmpC.macaddr = getMacForIP( tmpC.ipv4addr );
+                    if(tmpC.macaddr != "")
+                        mCameraListModel->insertData(tmpC);
+                }
+            } //if (xml.isStartElement()
+        } //while (!xml.atEnd())
+    } //while (m_socket->hasPendingDatagrams())
 }
 
 /**
