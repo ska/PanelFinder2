@@ -97,6 +97,7 @@ private:
 
     quint8 toCidr(const QString ipv4netmask) const;
     void jsonFindValue(QString ip, QJsonObject *jobj);
+    void jsonFindValueHelper(QString ip, QJsonObject *jobj, QVector<QString> &path);
     void jsonParseValue(QString ip, QString jsonpath, QString jsonvalue);
     qint16 findInPanelSetting( const QString r);
     void rebootPanel(QString ipadr, quint8 rt);

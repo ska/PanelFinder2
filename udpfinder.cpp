@@ -8,6 +8,7 @@ UdpFinder::UdpFinder(QObject *parent)
 {
     mcase = 0;
     m_SelectedInterface = 0;
+    m_RunningInterface = 0;
     mIpaddr.clear();
     mIpaddr.append( "All interfaces" );
 
@@ -73,7 +74,10 @@ void UdpFinder::scanCmd()
             m_RunningInterface = m_SelectedInterface;
         }
 
-        msocket->bind(QHostAddress( mIpaddr.at(m_RunningInterface)), 9999);
+        QHostAddress bindAddr = (m_RunningInterface == 0)
+                                ? QHostAddress::AnyIPv4
+                                : QHostAddress(mIpaddr.at(m_RunningInterface));
+        msocket->bind(bindAddr, 9999);
         connect(msocket, SIGNAL(readyRead()), this, SLOT(readyRead()));
     }
     QByteArray Data;
@@ -95,6 +99,8 @@ void UdpFinder::readyRead()
     quint16 senderPort;
 
     quint16 bytes_received = msocket->readDatagram(buffer.data(), buffer.size(), &sender, &senderPort );
+    if (bytes_received < sizeof(struct_selfinfo1))
+        return;
     if (strncmp("I am here.0", buffer, 11) == 0 && ( buffer[11] == '2' || buffer[11] == '3') )
     {
         struct_selfinfo1 tmp2;
@@ -122,10 +128,12 @@ QStringList UdpFinder::ipaddr() const
 
 void UdpFinder::testString(QString string)
 {
-    m_SelectedInterface = string.toUInt();
+    uint val = string.toUInt();
+    m_SelectedInterface = (val <= mIpaddr.size() - 1) ? static_cast<quint8>(val) : 0;
     qDebug() << "Selected interface NUM: " << QString("%1").arg((quint16)m_SelectedInterface, 0, 10).toUpper();
     mcase = 0;
     m_RunningInterface = 0;
-    mPanelListModel->clearList();
+    if (mPanelListModel)
+        mPanelListModel->clearList();
     mtimer->setInterval(100);
 }

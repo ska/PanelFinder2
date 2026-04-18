@@ -53,6 +53,7 @@ PanelListModel::PanelListModel()
             mPanelSettDefault.ipv4addr = settGroupName;
             mPanelSettDefault.uname    = settings.value("user").toString();
             mPanelSettDefault.password = settings.value("password").toString();
+            settings.endGroup();
             continue;
         }
         tmp.ipv4addr = settGroupName;
@@ -89,6 +90,7 @@ void PanelListModel::updateOrRemovePanels()
             beginRemoveRows(QModelIndex(), i, i);
             mList.remove(i);
             endRemoveRows();
+            i--;
             emit listChanged();
         } else {
             /* Update panel infos */
@@ -449,76 +451,55 @@ void PanelListModel::rebootConfigOsPanel(QString ipadr)
  ********************************************************************/
 void PanelListModel::jsonFindValue(QString ip, QJsonObject *jobj)
 {
-    QString tab;
-    static quint8 mLevel;
-    static QString mJsonPath[512];
+    QVector<QString> path;
+    jsonFindValueHelper(ip, jobj, path);
+}
 
-    QJsonObject::iterator i;
-    for (i=jobj->begin(); i!=jobj->end(); ++i)
+void PanelListModel::jsonFindValueHelper(QString ip, QJsonObject *jobj, QVector<QString> &path)
+{
+    for (auto i = jobj->begin(); i != jobj->end(); ++i)
     {
         if (i.value().isObject())
         {
-            mLevel++;
-            tab = "";
-            for(int j=0; j<mLevel; j++)
-                tab.append(".");
-            mJsonPath[mLevel-1] = i.key();
-            //qDebug() << "[" << mLevel << "]" << tab << "OBJECT" << i.key();
+            path.append(i.key());
             QJsonObject inn = i.value().toObject();
-            jsonFindValue(ip, &inn);
+            jsonFindValueHelper(ip, &inn, path);
+            path.removeLast();
+        }
+        else if (i.value().isArray())
+        {
+            QJsonArray qja = i.value().toArray();
+            for (int k = 0; k < qja.size(); k++)
+            {
+                if (qja.at(k).isObject())
+                {
+                    path.append(QString("%1[%2]").arg(i.key()).arg(k));
+                    QJsonObject inn = qja.at(k).toObject();
+                    jsonFindValueHelper(ip, &inn, path);
+                    path.removeLast();
+                }
+            }
         }
         else
-            if (i.value().isArray())
+        {
+            QString fullPath = QStringList(path.begin(), path.end()).join('.')
+                               + (path.isEmpty() ? "" : ".") + i.key();
+            switch (i.value().type())
             {
-                QJsonArray qja = i.value().toArray();
-                for(int k=0; k<qja.size(); k++)
-                {
-                    if(qja.at(k).isObject())
-                    {
-                        mLevel++;
-                        tab = "";
-                        for(int j=0; j<mLevel; j++)
-                            tab.append(".");
-                        mJsonPath[mLevel-1] = i.key();
-                        mJsonPath[mLevel-1].append(QString("[%1]").arg(k));
-                        QJsonObject inn = qja.at(k).toObject();
-                        jsonFindValue(ip, &inn);
-                    }
-                }
-            } else {
-                mLevel++;
-
-                tab = "";
-                for(int j=0; j<mLevel-1; j++)
-                {
-                    tab.append(mJsonPath[j]);
-                    tab.append(".");
-                }
-                tab.append(i.key());
-
-                switch (i.value().type())
-                {
-                case QJsonValue::Bool:
-                    jsonParseValue( ip, tab, QString::number(i.value().toBool()) );
-                    break;
-
-                case QJsonValue::String:
-                    jsonParseValue( ip, tab, i.value().toString() );
-                    break;
-
-                case QJsonValue::Double:
-                    jsonParseValue( ip, tab, QString::number(i.value().toInt()) );
-                    break;
-
-                default:
-                    break;
-                }
-                mLevel--;
+            case QJsonValue::Bool:
+                jsonParseValue(ip, fullPath, QString::number(i.value().toBool()));
+                break;
+            case QJsonValue::String:
+                jsonParseValue(ip, fullPath, i.value().toString());
+                break;
+            case QJsonValue::Double:
+                jsonParseValue(ip, fullPath, QString::number(i.value().toInt()));
+                break;
+            default:
+                break;
             }
+        }
     }
-
-    if(mLevel)
-        mLevel--;
 }
 
 /**
