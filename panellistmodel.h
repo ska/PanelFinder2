@@ -89,7 +89,6 @@ signals:
 
 private:
     QNetworkAccessManager *manager;
-    QNetworkRequest request;
     QVector <PanelItem> mList;
     QVector <PanelSettingItem> mPanelSettList;
     PanelSettingItem mPanelSettDefault;

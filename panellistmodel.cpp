@@ -30,6 +30,7 @@ PanelListModel::PanelListModel()
         //settings.setValue("passvord", "AdminXX");
         //settings.endGroup();
 
+        // Esempio di credenziali per IP specifico — modificare nel file INI generato
         settings.beginGroup("192.168.1.155");
         settings.setValue("user", "admin");
         settings.setValue("password", "Admin123@");
@@ -94,22 +95,15 @@ void PanelListModel::updateOrRemovePanels()
             emit listChanged();
         } else {
             /* Update panel infos */
-            //https://192.168.1.194/rest/api/v1?cache=true
-            QString urls;
-            urls = REQ_PROTO;
-            urls.append( mList.at(i).ipv4addr );
-            urls.append( REQ_PORT );
-            urls.append( "/rest/api/v1?cache=true&js=true&js_var=_global_data" );
-            QUrl url(urls);
-            /*
-             * SSL SELF SIGNED IGNORE */
-            QSslConfiguration conf = request.sslConfiguration();
+            QUrl url(QString(REQ_PROTO) + mList.at(i).ipv4addr + REQ_PORT
+                     + "/rest/api/v1?cache=true&js=true&js_var=_global_data");
+
+            QNetworkRequest req;
+            QSslConfiguration conf = req.sslConfiguration();
             conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-            request.setSslConfiguration(conf);
-            /*
-             * SET url AND REQUEST */
-            request.setUrl( url );
-            manager->get(request);
+            req.setSslConfiguration(conf);
+            req.setUrl(url);
+            manager->get(req);
         }
     }
 }
@@ -403,30 +397,20 @@ void PanelListModel::replyFinished(QNetworkReply *reply)
  ********************************************************************/
 void PanelListModel::rebootPanel(QString ipadr, quint8 rt)
 {
-    /*
-     * CREA URL */
-    QString urls;
     QByteArray data("{\"action\":\"restart\",\"imageType\":\"");
     data.append( QString("%1").arg(rt, 0, 10).toLocal8Bit() );
     data.append("\"}");
 
-    urls = "https://";
-    urls.append( ipadr );
-    urls.append( "/rest/api/v1/system" );
-    QUrl url(urls);
+    QUrl url(QString("https://") + ipadr + "/rest/api/v1/system");
 
-    /*
-     * SSL SELF SIGNED IGNORE */
-    QSslConfiguration conf = request.sslConfiguration();
+    QNetworkRequest req;
+    QSslConfiguration conf = req.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
+    req.setSslConfiguration(conf);
+    req.setUrl(url);
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    /*
-     * SET url AND REQUEST */
-    request.setUrl( url );
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    //manager->get(request);
-    manager->post(request, data);
+    manager->post(req, data);
 }
 
 /**
