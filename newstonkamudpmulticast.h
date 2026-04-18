@@ -7,10 +7,10 @@
 #include <QList>
 #include "panellistmodel.h"
 
-static const QHostAddress   MCAST_ADDR("239.255.255.250");
-static const quint16        MCAST_PORT = 3702;
-static const quint16        NUMBER_OF_MULTI_REQ = 1;
-static const quint16        DISCOVERY_TIMEOUT = 500;
+inline const QHostAddress   MCAST_ADDR("239.255.255.250");
+inline constexpr quint16    MCAST_PORT = 3702;
+inline constexpr quint16    NUMBER_OF_MULTI_REQ = 1;
+inline constexpr quint16    DISCOVERY_TIMEOUT = 500;
 
 class NewStonkamUdpMulticast: public QObject
 {

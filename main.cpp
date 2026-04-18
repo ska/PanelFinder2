@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    QThread::sleep(0.5);
+    QThread::msleep(500);
     MY_SPLASH_SET_PROGRESS(splash, 100);
     MY_SPLASH_HIDE(splash);
     int ret = app.exec();

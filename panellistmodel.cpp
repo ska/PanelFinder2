@@ -9,7 +9,7 @@ PanelListModel::PanelListModel()
     connect(mTimer, SIGNAL(timeout()), this, SLOT(updateOrRemovePanels()));
     mTimer->start(5000);
 
-    manager = new QNetworkAccessManager();
+    manager = new QNetworkAccessManager(this);
     QObject::connect(manager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
                      this, SLOT(onAuthenticationRequestSlot(QNetworkReply*,QAuthenticator*)) );
     QObject::connect(manager, SIGNAL(finished(QNetworkReply*)),
@@ -30,6 +30,7 @@ PanelListModel::PanelListModel()
         //settings.setValue("passvord", "AdminXX");
         //settings.endGroup();
 
+        // Esempio di credenziali per IP specifico — modificare nel file INI generato
         settings.beginGroup("192.168.1.155");
         settings.setValue("user", "admin");
         settings.setValue("password", "Admin123@");
@@ -53,6 +54,7 @@ PanelListModel::PanelListModel()
             mPanelSettDefault.ipv4addr = settGroupName;
             mPanelSettDefault.uname    = settings.value("user").toString();
             mPanelSettDefault.password = settings.value("password").toString();
+            settings.endGroup();
             continue;
         }
         tmp.ipv4addr = settGroupName;
@@ -89,25 +91,19 @@ void PanelListModel::updateOrRemovePanels()
             beginRemoveRows(QModelIndex(), i, i);
             mList.remove(i);
             endRemoveRows();
+            i--;
             emit listChanged();
         } else {
             /* Update panel infos */
-            //https://192.168.1.194/rest/api/v1?cache=true
-            QString urls;
-            urls = REQ_PROTO;
-            urls.append( mList.at(i).ipv4addr );
-            urls.append( REQ_PORT );
-            urls.append( "/rest/api/v1?cache=true&js=true&js_var=_global_data" );
-            QUrl url(urls);
-            /*
-             * SSL SELF SIGNED IGNORE */
-            QSslConfiguration conf = request.sslConfiguration();
+            QUrl url(QString(REQ_PROTO) + mList.at(i).ipv4addr + REQ_PORT
+                     + "/rest/api/v1?cache=true&js=true&js_var=_global_data");
+
+            QNetworkRequest req;
+            QSslConfiguration conf = req.sslConfiguration();
             conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-            request.setSslConfiguration(conf);
-            /*
-             * SET url AND REQUEST */
-            request.setUrl( url );
-            manager->get(request);
+            req.setSslConfiguration(conf);
+            req.setUrl(url);
+            manager->get(req);
         }
     }
 }
@@ -314,8 +310,7 @@ void PanelListModel::onAuthenticationRequestSlot(QNetworkReply *reply, QAuthenti
 {
     qDebug() << "PanelListModel::onAuthenticationRequestSlot";
     QString replyIP;
-    QRegularExpression rx;
-    rx.setPattern("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$");
+    static const QRegularExpression rx("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$");
 
     QRegularExpressionMatch match = rx.match(reply->url().toString());
     if( match.hasMatch() )
@@ -371,8 +366,7 @@ qint16 PanelListModel::findInPanelSetting( const QString r)
 void PanelListModel::replyFinished(QNetworkReply *reply)
 {
     QString replyIP;
-    QRegularExpression rx;
-    rx.setPattern("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$");
+    static const QRegularExpression rx("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$");
 
     QRegularExpressionMatch match = rx.match(reply->url().toString());
     if( match.hasMatch() )
@@ -380,14 +374,17 @@ void PanelListModel::replyFinished(QNetworkReply *reply)
         replyIP = match.captured(3);
     } else {
         replyIP = "NO host";
+        reply->deleteLater();
         return;
     }
 
     if (reply->error()) {
+        reply->deleteLater();
         return;
     }
 
     QString answer = reply->readAll();
+    reply->deleteLater();
     QJsonObject object = QJsonDocument::fromJson(answer.toUtf8()).object();
     //qDebug() << object;
     jsonFindValue( replyIP, &object );
@@ -400,30 +397,20 @@ void PanelListModel::replyFinished(QNetworkReply *reply)
  ********************************************************************/
 void PanelListModel::rebootPanel(QString ipadr, quint8 rt)
 {
-    /*
-     * CREA URL */
-    QString urls;
     QByteArray data("{\"action\":\"restart\",\"imageType\":\"");
     data.append( QString("%1").arg(rt, 0, 10).toLocal8Bit() );
     data.append("\"}");
 
-    urls = "https://";
-    urls.append( ipadr );
-    urls.append( "/rest/api/v1/system" );
-    QUrl url(urls);
+    QUrl url(QString("https://") + ipadr + "/rest/api/v1/system");
 
-    /*
-     * SSL SELF SIGNED IGNORE */
-    QSslConfiguration conf = request.sslConfiguration();
+    QNetworkRequest req;
+    QSslConfiguration conf = req.sslConfiguration();
     conf.setPeerVerifyMode(QSslSocket::VerifyNone);
-    request.setSslConfiguration(conf);
+    req.setSslConfiguration(conf);
+    req.setUrl(url);
+    req.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    /*
-     * SET url AND REQUEST */
-    request.setUrl( url );
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-    //manager->get(request);
-    manager->post(request, data);
+    manager->post(req, data);
 }
 
 /**
@@ -449,76 +436,55 @@ void PanelListModel::rebootConfigOsPanel(QString ipadr)
  ********************************************************************/
 void PanelListModel::jsonFindValue(QString ip, QJsonObject *jobj)
 {
-    QString tab;
-    static quint8 mLevel;
-    static QString mJsonPath[512];
+    QVector<QString> path;
+    jsonFindValueHelper(ip, jobj, path);
+}
 
-    QJsonObject::iterator i;
-    for (i=jobj->begin(); i!=jobj->end(); ++i)
+void PanelListModel::jsonFindValueHelper(QString ip, QJsonObject *jobj, QVector<QString> &path)
+{
+    for (auto i = jobj->begin(); i != jobj->end(); ++i)
     {
         if (i.value().isObject())
         {
-            mLevel++;
-            tab = "";
-            for(int j=0; j<mLevel; j++)
-                tab.append(".");
-            mJsonPath[mLevel-1] = i.key();
-            //qDebug() << "[" << mLevel << "]" << tab << "OBJECT" << i.key();
+            path.append(i.key());
             QJsonObject inn = i.value().toObject();
-            jsonFindValue(ip, &inn);
+            jsonFindValueHelper(ip, &inn, path);
+            path.removeLast();
+        }
+        else if (i.value().isArray())
+        {
+            QJsonArray qja = i.value().toArray();
+            for (int k = 0; k < qja.size(); k++)
+            {
+                if (qja.at(k).isObject())
+                {
+                    path.append(QString("%1[%2]").arg(i.key()).arg(k));
+                    QJsonObject inn = qja.at(k).toObject();
+                    jsonFindValueHelper(ip, &inn, path);
+                    path.removeLast();
+                }
+            }
         }
         else
-            if (i.value().isArray())
+        {
+            QString fullPath = QStringList(path.begin(), path.end()).join('.')
+                               + (path.isEmpty() ? "" : ".") + i.key();
+            switch (i.value().type())
             {
-                QJsonArray qja = i.value().toArray();
-                for(int k=0; k<qja.size(); k++)
-                {
-                    if(qja.at(k).isObject())
-                    {
-                        mLevel++;
-                        tab = "";
-                        for(int j=0; j<mLevel; j++)
-                            tab.append(".");
-                        mJsonPath[mLevel-1] = i.key();
-                        mJsonPath[mLevel-1].append(QString("[%1]").arg(k));
-                        QJsonObject inn = qja.at(k).toObject();
-                        jsonFindValue(ip, &inn);
-                    }
-                }
-            } else {
-                mLevel++;
-
-                tab = "";
-                for(int j=0; j<mLevel-1; j++)
-                {
-                    tab.append(mJsonPath[j]);
-                    tab.append(".");
-                }
-                tab.append(i.key());
-
-                switch (i.value().type())
-                {
-                case QJsonValue::Bool:
-                    jsonParseValue( ip, tab, QString::number(i.value().toBool()) );
-                    break;
-
-                case QJsonValue::String:
-                    jsonParseValue( ip, tab, i.value().toString() );
-                    break;
-
-                case QJsonValue::Double:
-                    jsonParseValue( ip, tab, QString::number(i.value().toInt()) );
-                    break;
-
-                default:
-                    break;
-                }
-                mLevel--;
+            case QJsonValue::Bool:
+                jsonParseValue(ip, fullPath, QString::number(i.value().toBool()));
+                break;
+            case QJsonValue::String:
+                jsonParseValue(ip, fullPath, i.value().toString());
+                break;
+            case QJsonValue::Double:
+                jsonParseValue(ip, fullPath, QString::number(i.value().toInt()));
+                break;
+            default:
+                break;
             }
+        }
     }
-
-    if(mLevel)
-        mLevel--;
 }
 
 /**
@@ -535,22 +501,27 @@ void PanelListModel::jsonParseValue(QString ip, QString jsonpath, QString jsonva
     {
         if(mList.at(i).ipv4addr == ip)
         {
-            PanelItem tmpp;
-            tmpp = mList.at(i);
-            if("management.mainos.version" == jsonpath)
+            PanelItem tmpp = mList.at(i);
+            bool changed = false;
+
+            if("management.mainos.version" == jsonpath && tmpp.mainosVersion != jsonvalue) {
                 tmpp.mainosVersion = jsonvalue;
-
-            if("management.configos.version" == jsonpath)
+                changed = true;
+            } else if("management.configos.version" == jsonpath && tmpp.configosVersion != jsonvalue) {
                 tmpp.configosVersion = jsonvalue;
-
-            if("system.info.info.serialNo" == jsonpath)
+                changed = true;
+            } else if("system.info.info.serialNo" == jsonpath && tmpp.serialNo != jsonvalue) {
                 tmpp.serialNo = jsonvalue;
+                changed = true;
+            }
 
-
-            beginRemoveRows(QModelIndex(), i, i);
-            mList.remove(i);
-            endRemoveRows();
-            this->addData(tmpp);
+            if(changed) {
+                beginRemoveRows(QModelIndex(), i, i);
+                mList.remove(i);
+                endRemoveRows();
+                this->addData(tmpp);
+            }
+            break;
         }
     }
 }

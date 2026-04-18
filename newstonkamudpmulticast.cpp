@@ -1,4 +1,4 @@
-#include "NewStonkamUdpMulticast.h"
+#include "newstonkamudpmulticast.h"
 
 /**
  * @brief NewStonkamUdpMulticast::NewStonkamUdpMulticast
@@ -176,31 +176,50 @@ void NewStonkamUdpMulticast::processPendingDatagrams()
  */
 QString NewStonkamUdpMulticast::getMacForIP(QString ipAddress)
 {
+#if defined(Q_OS_LINUX)
+    QFile arpTable("/proc/net/arp");
+    if (!arpTable.open(QIODevice::ReadOnly | QIODevice::Text))
+        return "";
+
+    QTextStream in(&arpTable);
+    in.readLine(); // salta header
+    while (!in.atEnd()) {
+        QStringList fields = in.readLine().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+        // colonne: IP, HW type, Flags, HW address, Mask, Device
+        if (fields.size() >= 4 && fields.at(0) == ipAddress) {
+            QString mac = fields.at(3);
+            mac.remove(':');
+            return mac;
+        }
+    }
+    return "";
+
+#elif defined(Q_OS_WIN)
     QString MAC = "";
-    QRegularExpression regex = QRegularExpression("\\s+");
     QProcess process;
     process.start("cmd.exe");
-    process.write( QString("arp -a %1 \n\r").arg(ipAddress).toLocal8Bit());
-    process.write ("exit\n\r");
+    process.write(QString("arp -a %1 \n\r").arg(ipAddress).toLocal8Bit());
+    process.write("exit\n\r");
 
-    if(process.waitForFinished())
-    {
+    if (process.waitForFinished()) {
         QString result = process.readAll();
-        if(result.contains("No ARP Entries Found.", Qt::CaseInsensitive ))
-        {
+        if (result.contains("No ARP Entries Found.", Qt::CaseInsensitive))
             return MAC;
-        }
 
-        QStringList list = result.split(regex);
-        if(list.contains(ipAddress))
-        {
-            if(list.length() >= list.indexOf(ipAddress) + 11)
-                MAC = list.at(list.indexOf(ipAddress) + 11);
+        QStringList list = result.split(QRegularExpression("\\s+"));
+        if (list.contains(ipAddress)) {
+            int idx = list.indexOf(ipAddress);
+            if (list.length() >= idx + 11)
+                MAC = list.at(idx + 11);
         }
-        MAC = MAC.replace('-', "");
+        MAC.remove('-');
     }
-
     return MAC;
+
+#else
+    Q_UNUSED(ipAddress)
+    return "";
+#endif
 }
 
 /**
