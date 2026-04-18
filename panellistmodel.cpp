@@ -9,7 +9,7 @@ PanelListModel::PanelListModel()
     connect(mTimer, SIGNAL(timeout()), this, SLOT(updateOrRemovePanels()));
     mTimer->start(5000);
 
-    manager = new QNetworkAccessManager();
+    manager = new QNetworkAccessManager(this);
     QObject::connect(manager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
                      this, SLOT(onAuthenticationRequestSlot(QNetworkReply*,QAuthenticator*)) );
     QObject::connect(manager, SIGNAL(finished(QNetworkReply*)),
