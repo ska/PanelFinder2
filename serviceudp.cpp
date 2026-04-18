@@ -19,7 +19,7 @@ void ServiceUDP::sayAlreadyRunning()      //Just spit out some data
     Data.append(SW_NAME);
     Data.append(" - ");
     Data.append(SW_VER);
-    Data.append(" - Application already sunning");
+    Data.append(" - Application already running");
     socket->writeDatagram(Data,QHostAddress::LocalHost,61234);
 }
 
