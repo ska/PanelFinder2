@@ -27,5 +27,6 @@
         <file>pics/rebootGR.png</file>
         <file>pics/linux.png</file>
         <file>pics/easter-rabbit.png</file>
+        <file>pics/splash_400.png</file>
     </qresource>
 </RCC>
