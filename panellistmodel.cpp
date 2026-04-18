@@ -386,10 +386,12 @@ void PanelListModel::replyFinished(QNetworkReply *reply)
     }
 
     if (reply->error()) {
+        reply->deleteLater();
         return;
     }
 
     QString answer = reply->readAll();
+    reply->deleteLater();
     QJsonObject object = QJsonDocument::fromJson(answer.toUtf8()).object();
     //qDebug() << object;
     jsonFindValue( replyIP, &object );
@@ -516,22 +518,27 @@ void PanelListModel::jsonParseValue(QString ip, QString jsonpath, QString jsonva
     {
         if(mList.at(i).ipv4addr == ip)
         {
-            PanelItem tmpp;
-            tmpp = mList.at(i);
-            if("management.mainos.version" == jsonpath)
+            PanelItem tmpp = mList.at(i);
+            bool changed = false;
+
+            if("management.mainos.version" == jsonpath && tmpp.mainosVersion != jsonvalue) {
                 tmpp.mainosVersion = jsonvalue;
-
-            if("management.configos.version" == jsonpath)
+                changed = true;
+            } else if("management.configos.version" == jsonpath && tmpp.configosVersion != jsonvalue) {
                 tmpp.configosVersion = jsonvalue;
-
-            if("system.info.info.serialNo" == jsonpath)
+                changed = true;
+            } else if("system.info.info.serialNo" == jsonpath && tmpp.serialNo != jsonvalue) {
                 tmpp.serialNo = jsonvalue;
+                changed = true;
+            }
 
-
-            beginRemoveRows(QModelIndex(), i, i);
-            mList.remove(i);
-            endRemoveRows();
-            this->addData(tmpp);
+            if(changed) {
+                beginRemoveRows(QModelIndex(), i, i);
+                mList.remove(i);
+                endRemoveRows();
+                this->addData(tmpp);
+            }
+            break;
         }
     }
 }
