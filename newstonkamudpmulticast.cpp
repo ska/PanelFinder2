@@ -1,4 +1,4 @@
-#include "NewStonkamUdpMulticast.h"
+#include "newstonkamudpmulticast.h"
 
 /**
  * @brief NewStonkamUdpMulticast::NewStonkamUdpMulticast

@@ -1,4 +1,4 @@
-#include "MySplashScreen.h"
+#include "mysplashscreen.h"
 
 #include <QGuiApplication>
 #include <QPainter>
