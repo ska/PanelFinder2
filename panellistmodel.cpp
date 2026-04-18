@@ -316,8 +316,7 @@ void PanelListModel::onAuthenticationRequestSlot(QNetworkReply *reply, QAuthenti
 {
     qDebug() << "PanelListModel::onAuthenticationRequestSlot";
     QString replyIP;
-    QRegularExpression rx;
-    rx.setPattern("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$");
+    static const QRegularExpression rx("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$");
 
     QRegularExpressionMatch match = rx.match(reply->url().toString());
     if( match.hasMatch() )
@@ -373,8 +372,7 @@ qint16 PanelListModel::findInPanelSetting( const QString r)
 void PanelListModel::replyFinished(QNetworkReply *reply)
 {
     QString replyIP;
-    QRegularExpression rx;
-    rx.setPattern("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$");
+    static const QRegularExpression rx("^((http[s]?|ftp):\\/)?\\/?([^:\\/\\s]+)((\\/\\w+)*\\/)([\\w\\-\\.]+[^#?\\s]+)(.*)?(#[\\w\\-]+)?$");
 
     QRegularExpressionMatch match = rx.match(reply->url().toString());
     if( match.hasMatch() )
