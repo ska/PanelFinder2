@@ -380,6 +380,7 @@ void PanelListModel::replyFinished(QNetworkReply *reply)
         replyIP = match.captured(3);
     } else {
         replyIP = "NO host";
+        reply->deleteLater();
         return;
     }
 
