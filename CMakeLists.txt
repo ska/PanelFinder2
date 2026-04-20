@@ -9,9 +9,7 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick Widgets Network)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Widgets Network)
+find_package(Qt6 REQUIRED COMPONENTS Core Quick Widgets Network)
 
 add_definitions(-DUSE_SSL)
 
@@ -26,37 +24,16 @@ set(PROJECT_SOURCES
     qml.qrc
 )
 
-if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
-
-    set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/resources/PanelFinder2.rc")
-    qt_add_executable(PanelFinder2
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES} ${app_icon_resource_windows}
-        newstonkamudpmulticast.h newstonkamudpmulticast.cpp
-        mysplashscreen.h mysplashscreen.cpp
-
-    )
-# Define target properties for Android with Qt 6 as:
-#    set_property(TARGET PanelFinder2 APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
-#                 ${CMAKE_CURRENT_SOURCE_DIR}/android)
-# For more information, see https://doc.qt.io/qt-6/qt-add-executable.html#target-creation
-else()
-    if(ANDROID)
-        add_library(PanelFinder2 SHARED
-            ${PROJECT_SOURCES}
-        )
-# Define properties for Android with Qt 5 after find_package() calls as:
-#    set(ANDROID_PACKAGE_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/android")
-    else()
-        add_executable(PanelFinder2
-          ${PROJECT_SOURCES}
-          serviceudp.h serviceudp.cpp
-        )
-    endif()
-endif()
+set(app_icon_resource_windows "${CMAKE_CURRENT_SOURCE_DIR}/resources/PanelFinder2.rc")
+qt_add_executable(PanelFinder2
+    MANUAL_FINALIZATION
+    ${PROJECT_SOURCES} ${app_icon_resource_windows}
+    newstonkamudpmulticast.h newstonkamudpmulticast.cpp
+    mysplashscreen.h mysplashscreen.cpp
+)
 
 target_link_libraries(PanelFinder2
-  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network)
+    PRIVATE Qt6::Core Qt6::Quick Qt6::Widgets Qt6::Network)
 
 set_target_properties(PanelFinder2 PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
@@ -78,9 +55,35 @@ install(TARGETS PanelFinder2
     BUNDLE DESTINATION .
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR})
 
-if(QT_VERSION_MAJOR EQUAL 6)
-    qt_import_qml_plugins(PanelFinder2)
-    qt_finalize_executable(PanelFinder2)
+qt_import_qml_plugins(PanelFinder2)
+qt_finalize_executable(PanelFinder2)
+
+# Windows deployment target
+if(WIN32)
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt
+        HINTS "${Qt6_DIR}/../../../bin"
+    )
+
+    if(WINDEPLOYQT_EXECUTABLE)
+        set(DEPLOY_DIR "${CMAKE_BINARY_DIR}/deploy")
+
+        add_custom_target(deploy
+            COMMAND ${CMAKE_COMMAND} -E make_directory "${DEPLOY_DIR}"
+            COMMAND ${CMAKE_COMMAND} -E copy "$<TARGET_FILE:PanelFinder2>" "${DEPLOY_DIR}/"
+            COMMAND "${WINDEPLOYQT_EXECUTABLE}"
+                --dir "${DEPLOY_DIR}"
+                --qmldir "${CMAKE_SOURCE_DIR}"
+                $<$<CONFIG:Release>:--release>
+                $<$<CONFIG:Debug>:--debug>
+                --no-translations
+                --no-system-d3d-compiler
+                --no-opengl-sw
+                "${DEPLOY_DIR}/$<TARGET_FILE_NAME:PanelFinder2>"
+            DEPENDS PanelFinder2
+            COMMENT "Deploying PanelFinder2 for Windows..."
+        )
+        message(STATUS "Deploy target available: cmake --build . --target deploy")
+    else()
+        message(WARNING "windeployqt not found - 'deploy' target unavailable")
+    endif()
 endif()
-
-
