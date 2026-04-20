@@ -10,8 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick Widgets Network)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick Widgets Network)
 
 add_definitions(-DUSE_SSL)
 
@@ -56,7 +56,7 @@ else()
 endif()
 
 target_link_libraries(PanelFinder2
-  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick Qt::Widgets)
+  PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::Quick Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Network)
 
 set_target_properties(PanelFinder2 PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
