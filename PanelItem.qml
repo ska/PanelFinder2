@@ -53,13 +53,14 @@ Rectangle{
 
     Popup {
         id: credentialsPopup
-        x: (panelItem.width - width) / 2
-        y: (panelItem.height - height) / 2
-        width: 260
-        height: 130
+        x: 0
+        y: 0
+        width: parent.width * 0.78
+        height: credentialsColumn.implicitHeight + 16
         modal: true
         focus: true
         closePolicy: Popup.NoAutoClose
+        padding: 0
         onOpened: passwordField.forceActiveFocus()
 
         background: Rectangle {
@@ -69,41 +70,74 @@ Rectangle{
         }
 
         Column {
-            anchors.fill: parent
-            anchors.margins: 10
-            spacing: 8
+            id: credentialsColumn
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 8
+            spacing: 6
 
             Text {
-                text: "Password " + panelItem.ipv4addr
-                color: "white"
+                text: "Credentials"
                 font.pointSize: 9
                 font.bold: true
+                color: "white"
             }
 
-            TextField {
-                id: passwordField
-                width: parent.width
-                placeholderText: "Password"
-                echoMode: TextInput.Password
-                color: "white"
-                background: Rectangle { color: "#555"; border.color: "#888"; radius: 2 }
-                Keys.onReturnPressed: {
-                    listModelQml.savePanelCredentials(panelItem.ipv4addr, passwordField.text)
-                    credentialsPopup.close()
-                    passwordField.text = ""
+            Rectangle { width: parent.width; height: 1; color: "#555" }
+
+            Row {
+                spacing: 5
+                Text {
+                    text: "IP"
+                    font.pointSize: 9
+                    color: "#8899bb"
+                    width: 58
                 }
-                Keys.onEscapePressed: {
-                    credentialsPopup.close()
-                    passwordField.text = ""
+                Text {
+                    text: panelItem.ipv4addr
+                    font.pointSize: 9
+                    font.bold: true
+                    color: "#ddeeff"
+                }
+            }
+            Row {
+                spacing: 5
+                Text {
+                    text: "Password"
+                    font.pointSize: 9
+                    color: "#8899bb"
+                    width: 58
+                }
+                TextField {
+                    id: passwordField
+                    width: credentialsColumn.width - 58 - 5
+                    height: 22
+                    placeholderText: "password"
+                    echoMode: TextInput.Password
+                    color: "#ddeeff"
+                    font.pointSize: 9
+                    leftPadding: 4
+                    background: Rectangle { color: "#555"; border.color: "#888"; radius: 2 }
+                    Keys.onReturnPressed: {
+                        listModelQml.savePanelCredentials(panelItem.ipv4addr, passwordField.text)
+                        credentialsPopup.close()
+                        passwordField.text = ""
+                    }
+                    Keys.onEscapePressed: {
+                        credentialsPopup.close()
+                        passwordField.text = ""
+                    }
                 }
             }
 
             Row {
-                spacing: 8
+                spacing: 6
                 anchors.horizontalCenter: parent.horizontalCenter
 
                 Button {
                     text: "Save"
+                    font.pointSize: 9
                     onClicked: {
                         listModelQml.savePanelCredentials(panelItem.ipv4addr, passwordField.text)
                         credentialsPopup.close()
@@ -112,6 +146,7 @@ Rectangle{
                 }
                 Button {
                     text: "Cancel"
+                    font.pointSize: 9
                     onClicked: {
                         credentialsPopup.close()
                         passwordField.text = ""
@@ -123,55 +158,84 @@ Rectangle{
 
     Popup {
         id: infoPopup
-
-        x: infoImageContainer.x-width+(infoImageContainer.width*2)
-        y: 4//panelItem.height - 37;
-        width: parent.width* 0.75
-        height: 60
+        x: 0
+        y: 0
+        width: parent.width * 0.78
+        height: infoColumn.implicitHeight + 16
         modal: false
         focus: false
-        opacity: 0.95
+        opacity: 0.97
         closePolicy: Popup.NoAutoClose
+        padding: 0
 
-        Text {
-            id: mainosText
-            text: "M: " + panelItem.mainosVer;
-            horizontalAlignment: Text.AlignLeft
-            font.pointSize: 9
-            font.bold: true
-            color: "white"
-            anchors.left: parent.left;
-            anchors.leftMargin: 2;
-            anchors.top: parent.top;
-            anchors.topMargin: -3;
-        }
-        Text {
-            id: configosText
-            text: "C: " + panelItem.configosVer;
-            horizontalAlignment: Text.AlignLeft
-            font.pointSize: 9
-            font.bold: true
-            color: "white"
-            anchors.left: parent.left;
-            anchors.leftMargin: 2;
-            anchors.top: mainosText.bottom;
-            anchors.topMargin: 0;
-        }
-        Text {
-            id: serialText
-            text: "SN: " + panelItem.serialNo;
-            horizontalAlignment: Text.AlignLeft
-            font.pointSize: 9
-            font.bold: true
-            color: "white"
-            anchors.left: parent.left;
-            anchors.leftMargin: 2;
-            anchors.top: configosText.bottom;
-            anchors.topMargin: 0;
-        }
         background: Rectangle {
-            color: "#888"
-            border.color: "black"
+            color: "#333"
+            border.color: "#888"
+            radius: 4
+        }
+
+        Column {
+            id: infoColumn
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 8
+            spacing: 6
+
+            Text {
+                text: "Device info"
+                font.pointSize: 9
+                font.bold: true
+                color: "white"
+            }
+
+            Rectangle { width: parent.width; height: 1; color: "#555" }
+
+            Row {
+                spacing: 5
+                Text {
+                    text: "Main OS"
+                    font.pointSize: 9
+                    color: "#8899bb"
+                    width: 58
+                }
+                Text {
+                    text: panelItem.mainosVer
+                    font.pointSize: 9
+                    font.bold: true
+                    color: "#ddeeff"
+                }
+            }
+            Row {
+                spacing: 5
+                Text {
+                    text: "Config OS"
+                    font.pointSize: 9
+                    color: "#8899bb"
+                    width: 58
+                }
+                Text {
+                    text: panelItem.configosVer
+                    font.pointSize: 9
+                    font.bold: true
+                    color: "#ddeeff"
+                }
+            }
+            Row {
+                spacing: 5
+                Text {
+                    text: "Serial"
+                    font.pointSize: 9
+                    color: "#8899bb"
+                    width: 58
+                }
+                Text {
+                    text: panelItem.serialNo
+                    font.pointSize: 9
+                    font.bold: true
+                    color: "#ddeeff"
+                }
+            }
         }
     }
 
