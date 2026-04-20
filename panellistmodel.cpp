@@ -360,6 +360,31 @@ qint16 PanelListModel::findInPanelSetting( const QString r)
 }
 
 /**
+ * @brief PanelListModel::savePanelCredentials
+ ********************************************************************/
+void PanelListModel::savePanelCredentials(const QString &ipv4addr, const QString &password, const QString &user)
+{
+    QSettings settings(SETTING_FNAME, QSettings::IniFormat);
+    settings.beginGroup(ipv4addr);
+    settings.setValue("user", user);
+    settings.setValue("password", password);
+    settings.endGroup();
+    settings.sync();
+
+    qint16 idx = findInPanelSetting(ipv4addr);
+    if (idx >= 0) {
+        mPanelSettList[idx].uname    = user;
+        mPanelSettList[idx].password = password;
+    } else {
+        PanelSettingItem item;
+        item.ipv4addr = ipv4addr;
+        item.uname    = user;
+        item.password = password;
+        mPanelSettList.append(item);
+    }
+}
+
+/**
  * @brief PanelListModel::replyFinished
  * @param reply
  ********************************************************************/

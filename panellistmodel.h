@@ -73,6 +73,7 @@ public:
 
     Q_INVOKABLE void rebootMainOsPanel(QString ipadr);
     Q_INVOKABLE void rebootConfigOsPanel(QString ipadr);
+    Q_INVOKABLE void savePanelCredentials(const QString &ipv4addr, const QString &password, const QString &user = "admin");
 
 protected:
     QHash<int, QByteArray> roleNames() const;

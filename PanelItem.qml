@@ -52,6 +52,76 @@ Rectangle{
     property string serialNo
 
     Popup {
+        id: credentialsPopup
+        x: (panelItem.width - width) / 2
+        y: (panelItem.height - height) / 2
+        width: 260
+        height: 130
+        modal: true
+        focus: true
+        closePolicy: Popup.NoAutoClose
+        onOpened: passwordField.forceActiveFocus()
+
+        background: Rectangle {
+            color: "#333"
+            border.color: "#888"
+            radius: 4
+        }
+
+        Column {
+            anchors.fill: parent
+            anchors.margins: 10
+            spacing: 8
+
+            Text {
+                text: "Password " + panelItem.ipv4addr
+                color: "white"
+                font.pointSize: 9
+                font.bold: true
+            }
+
+            TextField {
+                id: passwordField
+                width: parent.width
+                placeholderText: "Password"
+                echoMode: TextInput.Password
+                color: "white"
+                background: Rectangle { color: "#555"; border.color: "#888"; radius: 2 }
+                Keys.onReturnPressed: {
+                    listModelQml.savePanelCredentials(panelItem.ipv4addr, passwordField.text)
+                    credentialsPopup.close()
+                    passwordField.text = ""
+                }
+                Keys.onEscapePressed: {
+                    credentialsPopup.close()
+                    passwordField.text = ""
+                }
+            }
+
+            Row {
+                spacing: 8
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Button {
+                    text: "Save"
+                    onClicked: {
+                        listModelQml.savePanelCredentials(panelItem.ipv4addr, passwordField.text)
+                        credentialsPopup.close()
+                        passwordField.text = ""
+                    }
+                }
+                Button {
+                    text: "Cancel"
+                    onClicked: {
+                        credentialsPopup.close()
+                        passwordField.text = ""
+                    }
+                }
+            }
+        }
+    }
+
+    Popup {
         id: infoPopup
 
         x: infoImageContainer.x-width+(infoImageContainer.width*2)
@@ -233,8 +303,15 @@ Rectangle{
                 MouseArea {
                     anchors.fill: parent
                     hoverEnabled: true
-                    onEntered: {infoPopup.open()}
-                    onExited:  {infoPopup.close()}
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onEntered: { infoPopup.open() }
+                    onExited:  { infoPopup.close() }
+                    onClicked: function(mouse) {
+                        if (mouse.button === Qt.RightButton) {
+                            infoPopup.close()
+                            credentialsPopup.open()
+                        }
+                    }
                 }
             }
         }
