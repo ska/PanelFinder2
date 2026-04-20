@@ -146,6 +146,12 @@ def _rand_version():
     return f"{random.randint(1, 5)}.{random.randint(0, 9)}.{random.randint(0, 99)}"
 
 
+def _rand_serial():
+    chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    middle = "".join(random.choice(chars) for _ in range(16))
+    return f"AA{middle}AA"
+
+
 class Panel:
     def __init__(self):
         self.ip           = f"192.168.1.{random.randint(10, 250)}"
@@ -158,7 +164,7 @@ class Panel:
         # Dati REST
         self.mainos_ver   = _rand_version()
         self.configos_ver = _rand_version()
-        self.serial_no    = f"SN{random.randint(100000, 999999)}"
+        self.serial_no    = _rand_serial()
 
     def __str__(self):
         return (f"{self.hostname:20s}  {self.ip:16s}  {self.mac}  {self.module}"

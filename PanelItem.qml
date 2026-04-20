@@ -55,7 +55,7 @@ Rectangle{
         id: credentialsPopup
         x: 0
         y: 0
-        width: parent.width * 0.78
+        width: parent.width * 0.82
         height: credentialsColumn.implicitHeight + 16
         modal: true
         focus: true
@@ -160,7 +160,7 @@ Rectangle{
         id: infoPopup
         x: 0
         y: 0
-        width: parent.width * 0.78
+        width: parent.width * 0.82
         height: infoColumn.implicitHeight + 16
         modal: false
         focus: false
@@ -224,16 +224,18 @@ Rectangle{
             Row {
                 spacing: 5
                 Text {
-                    text: "Serial"
+                    text: "SN"
                     font.pointSize: 9
                     color: "#8899bb"
-                    width: 58
+                    width: 30
                 }
                 Text {
                     text: panelItem.serialNo
                     font.pointSize: 9
                     font.bold: true
                     color: "#ddeeff"
+                    width: infoColumn.width - 35
+                    elide: Text.ElideRight
                 }
             }
         }
