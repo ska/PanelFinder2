@@ -422,6 +422,7 @@ Rectangle{
             height: 25
             width: height
             color: "transparent"
+            visible: panelItem.mainosVer !== "" && panelItem.configosVer !== "" && panelItem.serialNo !== ""
 
             Image {
                 width: parent.width

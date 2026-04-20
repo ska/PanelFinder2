@@ -68,90 +68,110 @@ ApplicationWindow {
     }
 
     Popup {
-            id: rebootPopup
-            width: 400
-            height: 200
-            x: (appWindow.width/2)-(width/2);
-            y: (appWindow.height/2)-100;
-            modal: true
-            focus: false
-            opacity: 0.95
-            closePolicy: Popup.NoAutoClose
+        id: rebootPopup
+        width: 280
+        height: rebootColumn.implicitHeight + 16
+        x: (appWindow.width  - width)  / 2
+        y: (appWindow.height - height) / 2
+        modal: true
+        focus: true
+        padding: 0
+        closePolicy: Popup.NoAutoClose
 
-            GridLayout {
-                id: rebootPopupGrid
-                anchors.fill: parent
-                rows: 2
-                columns: 3
+        onOpened: rebootColumn.forceActiveFocus()
 
-                Rectangle {
-                     Layout.fillHeight: true
-                     Layout.fillWidth: true
-                     Layout.columnSpan: 3
-                     Layout.rowSpan: 1
-                     Layout.row: 0
-                     Layout.column: 0
-                     Text {
-                         anchors.fill: parent
-                         text: qsTr("<b>Confirm\n</n>Restart the system?")
-                     }
+        background: Rectangle {
+            color: "#333"
+            border.color: "#888"
+            radius: 4
+        }
+
+        Column {
+            id: rebootColumn
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.margins: 8
+            spacing: 6
+            focus: true
+
+            Keys.onPressed: function(event) {
+                if (event.key === Qt.Key_Escape) {
+                    rebootPopup.close()
+                } else if (event.key === Qt.Key_M) {
+                    listModelQml.rebootMainOsPanel(workingIp)
+                    workingIp = ""
+                    rebootPopup.close()
+                } else if (event.key === Qt.Key_C) {
+                    listModelQml.rebootConfigOsPanel(workingIp)
+                    workingIp = ""
+                    rebootPopup.close()
                 }
-
-                Rectangle {
-                     Layout.fillHeight: true
-                     Layout.fillWidth: true
-                     Layout.columnSpan: 1
-                     Layout.rowSpan: 1
-                     Layout.row: 1
-                     Layout.column: 0
-
-                     Button {
-                         anchors.fill: parent
-                         text: "ConfigOs"
-                         onClicked: {
-                             listModelQml.rebootConfigOsPanel( workingIp )
-                             workingIp = ""
-                             rebootPopup.close()
-                         }
-                     }
-                }
-
-                Rectangle {
-                     Layout.fillHeight: true
-                     Layout.fillWidth: true
-                     Layout.columnSpan: 1
-                     Layout.rowSpan: 1
-                     Layout.row: 1
-                     Layout.column: 1
-                     Button {
-                         anchors.fill: parent
-                         text: "MainOs"
-                         onClicked: {
-                             listModelQml.rebootMainOsPanel( workingIp )
-                             workingIp = ""
-                             rebootPopup.close()
-                         }
-                     }
-                }
-
-               Rectangle {
-                    color: "red"
-                    Layout.fillHeight: true
-                    Layout.fillWidth: true
-                    Layout.columnSpan: 1
-                    Layout.rowSpan: 1
-                    Layout.row: 1
-                    Layout.column: 2
-                    Button {
-                        anchors.fill: parent
-                        text: "Cancel"
-                        onClicked: rebootPopup.close()
-                    }
-               }
-
             }
 
+            Text {
+                text: "Reboot"
+                font.pointSize: 9
+                font.bold: true
+                color: "white"
+            }
+
+            Rectangle { width: parent.width; height: 1; color: "#555" }
+
+            Row {
+                spacing: 5
+                Text {
+                    text: "Target"
+                    font.pointSize: 9
+                    color: "#8899bb"
+                    width: 58
+                }
+                Text {
+                    text: workingIp
+                    font.pointSize: 9
+                    font.bold: true
+                    color: "#ddeeff"
+                }
+            }
+
+            Text {
+                text: "Select the OS to restart:"
+                font.pointSize: 9
+                color: "#8899bb"
+            }
+
+            Rectangle { width: parent.width; height: 1; color: "#444" }
+
+            Row {
+                spacing: 6
+                anchors.horizontalCenter: parent.horizontalCenter
+
+                Button {
+                    text: "Config OS"
+                    font.pointSize: 9
+                    onClicked: {
+                        listModelQml.rebootConfigOsPanel(workingIp)
+                        workingIp = ""
+                        rebootPopup.close()
+                    }
+                }
+                Button {
+                    text: "Main OS"
+                    font.pointSize: 9
+                    onClicked: {
+                        listModelQml.rebootMainOsPanel(workingIp)
+                        workingIp = ""
+                        rebootPopup.close()
+                    }
+                }
+                Button {
+                    text: "Cancel"
+                    font.pointSize: 9
+                    onClicked: rebootPopup.close()
+                }
+            }
         }
+    }
 
 
 
