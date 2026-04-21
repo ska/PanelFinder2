@@ -7,8 +7,8 @@ ApplicationWindow {
 
     id: appWindow
     visible: true
-    width: 800
-    height: 500
+    width: 500
+    height: 300
     title: qsTr(filterModelQml.getName() + " - V" + filterModelQml.getVersion() )
 
     property bool ignoreCheck: false
@@ -172,8 +172,6 @@ ApplicationWindow {
             }
         }
     }
-
-
 
     Rectangle {
         anchors.top: parent.top;
