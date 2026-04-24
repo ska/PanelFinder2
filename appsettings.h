@@ -18,9 +18,9 @@ struct PanelSettingItem
 class AppSettings : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(int  windowWidth    READ windowWidth    CONSTANT)
-    Q_PROPERTY(int  windowHeight   READ windowHeight   CONSTANT)
-    Q_PROPERTY(bool reduceOnClose  READ reduceOnClose  NOTIFY reduceOnCloseChanged)
+    Q_PROPERTY(int  windowWidth   READ windowWidth   CONSTANT)
+    Q_PROPERTY(int  windowHeight  READ windowHeight  CONSTANT)
+    Q_PROPERTY(bool reduceOnClose READ reduceOnClose NOTIFY reduceOnCloseChanged)
 public:
     explicit AppSettings(QObject *parent = nullptr);
 
@@ -40,14 +40,17 @@ signals:
     void reduceOnCloseChanged();
 
 private:
-    void initFile();
+    void initNewFiles();
     void loadAll();
+    void loadCredentials();
+    void migrateToSplitFiles(QSettings &main, const QStringList &groups);
     void flushWindowSize();
 
     int  mWindowWidth   = 520;
     int  mWindowHeight  = 300;
     bool mReduceOnClose = true;
 
+    QString                   mCredentialsFile;
     PanelSettingItem          mDefault;
     QVector<PanelSettingItem> mCredentials;
     QTimer                    mSaveTimer;
