@@ -3,7 +3,8 @@
 /**
  * @brief PanelListModel::PanelListModel
  */
-PanelListModel::PanelListModel()
+PanelListModel::PanelListModel(AppSettings *settings)
+    : mSettings(settings)
 {
     mTimer = new QTimer(this);
     connect(mTimer, SIGNAL(timeout()), this, SLOT(updateOrRemovePanels()));
@@ -14,56 +15,6 @@ PanelListModel::PanelListModel()
                      this, SLOT(onAuthenticationRequestSlot(QNetworkReply*,QAuthenticator*)) );
     QObject::connect(manager, SIGNAL(finished(QNetworkReply*)),
                      this, SLOT(replyFinished(QNetworkReply*)));
-
-    if (!QFile(SETTING_FNAME).exists())
-    {
-        QSettings settings(SETTING_FNAME, QSettings::IniFormat);
-        //settings.setIniCodec("UTF-8");
-
-        settings.beginGroup("default");
-        settings.setValue("user", "admin");
-        settings.setValue("password", "admin");
-        settings.endGroup();
-
-        //settings.beginGroup("192.168.1.*");
-        //settings.setValue("user", "admin");
-        //settings.setValue("passvord", "AdminXX");
-        //settings.endGroup();
-
-        // Esempio di credenziali per IP specifico — modificare nel file INI generato
-        settings.beginGroup("192.168.1.155");
-        settings.setValue("user", "admin");
-        settings.setValue("password", "Admin123@");
-        settings.endGroup();
-
-        settings.sync();
-    }
-
-
-    QSettings settings(SETTING_FNAME, QSettings::IniFormat);
-    QStringList groups = settings.childGroups();
-
-    foreach (QString settGroupName, groups)
-    {
-        qDebug() << "settGroupName: " << settGroupName;
-        PanelSettingItem tmp;
-
-        settings.beginGroup(settGroupName);
-        if( "default" == settGroupName)
-        {
-            mPanelSettDefault.ipv4addr = settGroupName;
-            mPanelSettDefault.uname    = settings.value("user").toString();
-            mPanelSettDefault.password = settings.value("password").toString();
-            settings.endGroup();
-            continue;
-        }
-        tmp.ipv4addr = settGroupName;
-        tmp.uname    = settings.value("user").toString();
-        tmp.password = settings.value("password").toString();
-
-        settings.endGroup();
-        mPanelSettList.append(tmp);
-    }
 }
 
 /**
@@ -322,41 +273,22 @@ void PanelListModel::onAuthenticationRequestSlot(QNetworkReply *reply, QAuthenti
     }
     qDebug() << "AA replyIP: " << replyIP;
 
-    //aAuthenticator->setUser( "admin" );
-    //aAuthenticator->setPassword( "admin" );
-    qint16 panelFound = findInPanelSetting(replyIP);
+    qint16 panelFound = mSettings->findCredentials(replyIP);
     qDebug() << "panelFound: " << panelFound;
-    if(panelFound >= 0)
+    if (panelFound >= 0)
     {
-        qDebug() << "Use: " << mPanelSettList.at(panelFound).uname << " - " <<  mPanelSettList.at(panelFound).password;
-        aAuthenticator->setUser( mPanelSettList.at(panelFound).uname );
-        aAuthenticator->setPassword( mPanelSettList.at(panelFound).password );
-    } else {
-        qDebug() << replyIP << " not found in file " << SETTING_FNAME;
-        qDebug() << "Use default: " << mPanelSettDefault.uname << " - " <<  mPanelSettDefault.password;
-        aAuthenticator->setUser(  mPanelSettDefault.uname );
-        aAuthenticator->setPassword( mPanelSettDefault.password );
+        const PanelSettingItem &cred = mSettings->credentialAt(panelFound);
+        qDebug() << "Use: " << cred.uname;
+        aAuthenticator->setUser(cred.uname);
+        aAuthenticator->setPassword(cred.password);
     }
-}
-
-/**
- * @brief PanelListModel::findInPanelSetting
- * @param r
- * @return
- ********************************************************************/
-qint16 PanelListModel::findInPanelSetting( const QString r)
-{
-    qint16 match = -1;
-    for(quint16 index=0; index< mPanelSettList.length(); index++)
+    else
     {
-        QString tmp = mPanelSettList.at(index).ipv4addr;
-        if( r.indexOf( tmp ) >= 0 )
-        {
-            match = index;
-            break;
-        }
+        qDebug() << replyIP << " not found in" << SETTING_FNAME << "- using default";
+        const PanelSettingItem &def = mSettings->defaultCredential();
+        aAuthenticator->setUser(def.uname);
+        aAuthenticator->setPassword(def.password);
     }
-    return match;
 }
 
 /**
@@ -364,24 +296,7 @@ qint16 PanelListModel::findInPanelSetting( const QString r)
  ********************************************************************/
 void PanelListModel::savePanelCredentials(const QString &ipv4addr, const QString &password, const QString &user)
 {
-    QSettings settings(SETTING_FNAME, QSettings::IniFormat);
-    settings.beginGroup(ipv4addr);
-    settings.setValue("user", user);
-    settings.setValue("password", password);
-    settings.endGroup();
-    settings.sync();
-
-    qint16 idx = findInPanelSetting(ipv4addr);
-    if (idx >= 0) {
-        mPanelSettList[idx].uname    = user;
-        mPanelSettList[idx].password = password;
-    } else {
-        PanelSettingItem item;
-        item.ipv4addr = ipv4addr;
-        item.uname    = user;
-        item.password = password;
-        mPanelSettList.append(item);
-    }
+    mSettings->saveCredentials(ipv4addr, user, password);
 }
 
 /**

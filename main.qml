@@ -7,9 +7,12 @@ ApplicationWindow {
 
     id: appWindow
     visible: true
-    width: 520
-    height: 300
+    width: appSettings.windowWidth
+    height: appSettings.windowHeight
     title: qsTr(filterModelQml.getName() + " - V" + filterModelQml.getVersion() )
+
+    onWidthChanged:  appSettings.saveWindowSize(width, height)
+    onHeightChanged: appSettings.saveWindowSize(width, height)
 
     property bool ignoreCheck: false
     property bool showMessage: true
