@@ -21,8 +21,9 @@ void AppSettings::initFile()
     QSettings s(SETTING_FNAME, QSettings::IniFormat);
 
     s.beginGroup("GUI");
-    s.setValue("width",  mWindowWidth);
-    s.setValue("height", mWindowHeight);
+    s.setValue("width",         mWindowWidth);
+    s.setValue("height",        mWindowHeight);
+    s.setValue("reduceOnClose", mReduceOnClose);
     s.endGroup();
 
     s.beginGroup("default");
@@ -44,8 +45,9 @@ void AppSettings::loadAll()
     QSettings s(SETTING_FNAME, QSettings::IniFormat);
 
     s.beginGroup("GUI");
-    mWindowWidth  = s.value("width",  520).toInt();
-    mWindowHeight = s.value("height", 300).toInt();
+    mWindowWidth   = s.value("width",         520).toInt();
+    mWindowHeight  = s.value("height",        300).toInt();
+    mReduceOnClose = s.value("reduceOnClose", true).toBool();
     s.endGroup();
 
     const QStringList groups = s.childGroups();
@@ -89,6 +91,19 @@ void AppSettings::flushWindowSize()
     s.setValue("height", mWindowHeight);
     s.endGroup();
     s.sync();
+}
+
+void AppSettings::setReduceOnClose(bool value)
+{
+    if (mReduceOnClose == value)
+        return;
+    mReduceOnClose = value;
+    QSettings s(SETTING_FNAME, QSettings::IniFormat);
+    s.beginGroup("GUI");
+    s.setValue("reduceOnClose", mReduceOnClose);
+    s.endGroup();
+    s.sync();
+    emit reduceOnCloseChanged();
 }
 
 void AppSettings::saveCredentials(const QString &ipv4addr, const QString &user, const QString &password)

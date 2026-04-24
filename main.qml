@@ -56,15 +56,14 @@ ApplicationWindow {
         }
     }
 
-    onClosing: {
-        if(ignoreCheck === false)
-        {
-            if(showMessage)
-            {
-                showMessage =false
+    onClosing: function(close) {
+        if (!ignoreCheck && appSettings.reduceOnClose) {
+            if (showMessage) {
+                showMessage = false
                 systemTray.showHideMessage()
             }
             appWindow.hide()
+            close.accepted = false
         } else {
             Qt.quit()
         }
@@ -227,40 +226,48 @@ ApplicationWindow {
     }
 
     Rectangle {
-        //anchors.bottom: parent.bottom;
         anchors.bottom: statusBar.top
         width: parent.width
-        height: 34
-        color: "darkgray";
+        height: 38
+        color: "#3c3c3c"
         z: 2
 
+        Rectangle {
+            width: parent.width
+            height: 1
+            color: "#606060"
+        }
+
         RowLayout {
-            id: rowLayout
             anchors.fill: parent
-            anchors.centerIn: parent
+            anchors.leftMargin: 6
+            anchors.rightMargin: 6
+            anchors.topMargin: 1
+            spacing: 6
+
             TextField {
-                placeholderText: "Type MAC Addr here.."
+                placeholderText: "Filter by MAC address..."
                 Layout.fillWidth: true
-                font.pointSize: 12
-                onTextChanged: {
-                    filterModelQml.setFilterString(text);
-                }
+                font.pointSize: 10
+                onTextChanged: filterModelQml.setFilterString(text)
             }
 
             ComboBox {
                 id: net
-                height: parent.height
-                Layout.fillWidth: true
                 Layout.minimumWidth: 120
                 Layout.preferredWidth: 130
                 Layout.maximumWidth: 200
                 model: udpfinderModel
                 textRole: "display"
+                onCurrentIndexChanged: udpfinderQml.testString(currentIndex)
+            }
 
-                onCurrentIndexChanged: {
-                    udpfinderQml.testString( currentIndex )
-                    //stonkamUdpMulticast.testString( currentIndex )
-                }
+            CheckBox {
+                text: "Minimize to tray"
+                font.pointSize: 9
+                checked: appSettings.reduceOnClose
+                onToggled: appSettings.setReduceOnClose(checked)
+                palette.windowText: "white"
             }
         }
     }
