@@ -147,7 +147,10 @@ void PanelListModel::insertData(const PanelItem &unit)
 {
     quint16 i;
 #ifdef QT_DEBUG
-    qDebug() << "Try to insert data: " << unit.macaddr << " --> " << unit.foundEpoc;
+    qDebug() << "    Insert panel:        ip:" << unit.ipv4addr
+             << " MAC:" << unit.macaddr
+             << " host:" << unit.hostname
+             << " module:" << unit.machine;
 #endif
     for(i=0; i<mList.size();i++)
     {

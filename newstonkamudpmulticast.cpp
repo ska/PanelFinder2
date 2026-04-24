@@ -52,8 +52,6 @@ void NewStonkamUdpMulticast::startDiscovery()
     const QString probe = buildProbe();
     const QByteArray data = probe.toUtf8();
 
-    //m_timeoutTimer->start();
-
     for (const QNetworkInterface &iface : QNetworkInterface::allInterfaces()) {
 
         if (!(iface.flags() & QNetworkInterface::IsUp) ||
@@ -66,21 +64,24 @@ void NewStonkamUdpMulticast::startDiscovery()
             if (entry.ip().protocol() != QAbstractSocket::IPv4Protocol)
                 continue;
 
-            qDebug() << "--> Send onvif probe on if"
-                        << iface.humanReadableName()
-                        << entry.ip().toString();
+            if (!mSelectedIp.isEmpty() && entry.ip().toString() != mSelectedIp)
+                continue;
+
+            qDebug() << "--> Send ONVIF probe     if" << iface.humanReadableName()
+                     << " ip:" << entry.ip().toString();
 
             m_socket->setMulticastInterface(iface);
 
             for (int i = 0; i < NUMBER_OF_MULTI_REQ; ++i)
-            {
-                m_socket->writeDatagram(
-                    data,
-                    MCAST_ADDR,
-                    MCAST_PORT);
-            }
+                m_socket->writeDatagram(data, MCAST_ADDR, MCAST_PORT);
         }
     }
+}
+
+void NewStonkamUdpMulticast::setSelectedInterface(const QString &ip)
+{
+    mSelectedIp = ip;
+    qDebug() << "Multicast interface set to:" << (ip.isEmpty() ? "all" : ip);
 }
 
 /**
@@ -140,15 +141,7 @@ void NewStonkamUdpMulticast::processPendingDatagrams()
                 //qDebug() << "  Endpoint ONVIF:" << xaddr << "\n";
                 QString ip = sender.toString();
                 QHostAddress netmask = getNetmaskForSender(sender);
-                QString tmp = "";
-                if (!netmask.isNull()) {
-                    qDebug() << "Camera:" << ip
-                             << "Netmask:" << netmask.toString();
-                    tmp = netmask.toString();
-                } else {
-                    qDebug() << "Camera:" << ip
-                             << "Netmask: non trovata";
-                }
+                QString tmp = netmask.isNull() ? "" : netmask.toString();
 
                 PanelItem tmpC;
                 tmpC.hostname = "Stonkam";
@@ -160,7 +153,10 @@ void NewStonkamUdpMulticast::processPendingDatagrams()
 
                 if(mCameraListModel && tmpC.ipv4addr != "")
                 {
-                    tmpC.macaddr = getMacForIP( tmpC.ipv4addr );
+                    tmpC.macaddr = getMacForIP(tmpC.ipv4addr);
+                    qDebug() << "<-- Recv ONVIF reply     from" << ip
+                             << " MAC:" << (tmpC.macaddr.isEmpty() ? "n/a" : tmpC.macaddr)
+                             << " netmask:" << (tmp.isEmpty() ? "n/a" : tmp);
                     if(tmpC.macaddr != "")
                         mCameraListModel->insertData(tmpC);
                 }

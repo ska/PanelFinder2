@@ -24,24 +24,29 @@ typedef struct
 class UdpFinder : public QObject
 {
     Q_OBJECT
-    //Q_PROPERTY(QStringListModel model MEMBER mIpaddrModel NOTIFY modelChanged)
+    Q_PROPERTY(int currentInterfaceIndex READ currentInterfaceIndex NOTIFY currentInterfaceIndexChanged)
 
 public:
     explicit UdpFinder(QObject *parent = nullptr);
     void setPanelList(PanelListModel *pl);
     Q_INVOKABLE void testString(QString string);
 
-
     QStringList ipaddr() const;
+    int currentInterfaceIndex() const { return m_SelectedInterface; }
 
 signals:
     void modelChanged(void);
+    void interfacesChanged(QStringList newList);
+    void interfaceSelected(QString ip);         // empty = all interfaces
+    void currentInterfaceIndexChanged();
 
 public slots:
     void scanCmd();
     void readyRead();
 
 private:
+    void refreshInterfaces();
+
     QUdpSocket *msocket;
     PanelListModel *mPanelListModel;
     QStringList mIpaddr;

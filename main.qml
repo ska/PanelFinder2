@@ -259,7 +259,8 @@ ApplicationWindow {
                 Layout.maximumWidth: 200
                 model: udpfinderModel
                 textRole: "display"
-                onCurrentIndexChanged: udpfinderQml.testString(currentIndex)
+                currentIndex: udpfinderQml.currentInterfaceIndex
+                onActivated: udpfinderQml.testString(currentIndex)
             }
 
             CheckBox {

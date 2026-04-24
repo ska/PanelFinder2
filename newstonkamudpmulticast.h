@@ -24,15 +24,18 @@ public:
     static QString getMacForIP(QString ipAddress);
     static QHostAddress getNetmaskForSender(const QHostAddress &sender);
 
+public slots:
+    void setSelectedInterface(const QString &ip);
+
 private slots:
     void sendReq();
     void processPendingDatagrams();
-
 
 private:
     QTimer              *m_timer;
     PanelListModel      *mCameraListModel;
     QUdpSocket          *m_socket;
+    QString              mSelectedIp;  // empty = all interfaces
 
     QString buildProbe() const;
 

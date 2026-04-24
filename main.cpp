@@ -116,6 +116,13 @@ int main(int argc, char *argv[])
     context->setContextProperty("udpfinderModel", &netIfModel);
     context->setContextProperty("udpfinderQml", udpfinder);
 
+    QObject::connect(udpfinder, &UdpFinder::interfacesChanged,
+                     [&netIfModel](const QStringList &list) {
+                         netIfModel.setStringList(list);
+                     });
+    QObject::connect(udpfinder, &UdpFinder::interfaceSelected,
+                     sk, &NewStonkamUdpMulticast::setSelectedInterface);
+
     SystemTray * systemTray = new SystemTray();
     context->setContextProperty("systemTray", systemTray);
     context->setContextProperty("serviceUDP", &serviceUDP);
