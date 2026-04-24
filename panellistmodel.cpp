@@ -31,7 +31,7 @@ void PanelListModel::updateOrRemovePanels()
 {
     // Discovery runs every 1s; threshold=3s guarantees ≥3 consecutive missed
     // responses. Check every 3s → worst-case removal: 3+3=6s, always under 10s.
-    static constexpr quint64 REMOVE_AFTER_SECS = 3;
+    static constexpr quint64 REMOVE_AFTER_SECS = 6;
 
     quint64 now = QDateTime::currentSecsSinceEpoch();
     for(quint16 i=0; i<mList.size(); i++)
