@@ -7,7 +7,7 @@ ApplicationWindow {
 
     id: appWindow
     visible: true
-    width: 500
+    width: 520
     height: 300
     title: qsTr(filterModelQml.getName() + " - V" + filterModelQml.getVersion() )
 

@@ -5,7 +5,7 @@
 #define SW_NAME     "PanelFinder2"
 #define VER_MAJ     2
 #define VER_MIN     10
-#define VER_FIX     0
+#define VER_FIX     1
 
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)

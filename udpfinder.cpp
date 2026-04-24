@@ -11,6 +11,8 @@ UdpFinder::UdpFinder(QObject *parent)
     m_RunningInterface = 0;
     mIpaddr.clear();
     mIpaddr.append( "All interfaces" );
+    mBroadcastAddr.clear();
+    mBroadcastAddr.append( "" );
 
     QList<QNetworkInterface> list = QNetworkInterface::allInterfaces();
     foreach (QNetworkInterface iface, list)
@@ -26,11 +28,13 @@ UdpFinder::UdpFinder(QObject *parent)
                 if( entry.ip().protocol() == QAbstractSocket::IPv4Protocol )
                 {
                     int index = iface.index();
+                    QString bcast = entry.broadcast().isNull() ? "255.255.255.255" : entry.broadcast().toString();
                     qDebug() << QString("ETH Interface: %1").arg(index) +\
                                 "  "+ iface.name() +\
                                 "  "+ entry.ip().toString() +\
                                 "  "+ iface.hardwareAddress();
                     mIpaddr.append( entry.ip().toString() );
+                    mBroadcastAddr.append( bcast );
                 }
             }
         }
@@ -84,7 +88,10 @@ void UdpFinder::scanCmd()
     Data.clear();
 
     Data.append("WhereAreYou.02");
-    msocket->writeDatagram(Data,QHostAddress::Broadcast,991);
+    QHostAddress broadcastAddr = (m_RunningInterface == 0 || m_RunningInterface >= mBroadcastAddr.size())
+                                 ? QHostAddress::Broadcast
+                                 : QHostAddress(mBroadcastAddr.at(m_RunningInterface));
+    msocket->writeDatagram(Data, broadcastAddr, 991);
     if(m_SelectedInterface == 0)
     {
         m_RunningInterface ++;

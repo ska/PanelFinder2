@@ -45,6 +45,7 @@ private:
     QUdpSocket *msocket;
     PanelListModel *mPanelListModel;
     QStringList mIpaddr;
+    QStringList mBroadcastAddr;
     QTimer *mtimer;
     quint8 mcase;
     quint8 m_SelectedInterface;
