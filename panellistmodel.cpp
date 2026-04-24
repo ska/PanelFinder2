@@ -8,7 +8,7 @@ PanelListModel::PanelListModel(AppSettings *settings)
 {
     mTimer = new QTimer(this);
     connect(mTimer, SIGNAL(timeout()), this, SLOT(updateOrRemovePanels()));
-    mTimer->start(5000);
+    mTimer->start(3000);
 
     manager = new QNetworkAccessManager(this);
     QObject::connect(manager, SIGNAL(authenticationRequired(QNetworkReply*,QAuthenticator*)),
@@ -29,23 +29,26 @@ PanelListModel::~PanelListModel()
  */
 void PanelListModel::updateOrRemovePanels()
 {
-    if(mTimer->interval() < 10000)
-        mTimer->setInterval(10000);
+    // Discovery runs every 1s; threshold=3s guarantees ≥3 consecutive missed
+    // responses. Check every 3s → worst-case removal: 3+3=6s, always under 10s.
+    static constexpr quint64 REMOVE_AFTER_SECS = 3;
 
-    quint64 tmp = QDateTime::currentSecsSinceEpoch();
-    for(quint16 i=0; i<mList.size();i++)
+    quint64 now = QDateTime::currentSecsSinceEpoch();
+    for(quint16 i=0; i<mList.size(); i++)
     {
-        /*Remome if not present for more than 15sec */
-        if( tmp - mList.at(i).foundEpoc > 15 )
+        if(now - mList.at(i).foundEpoc >= REMOVE_AFTER_SECS)
         {
-            qDebug() << "Remove panel: " << mList.at(i).macaddr;
+            qDebug() << "Remove panel:" << mList.at(i).ipv4addr
+                     << "MAC:" << mList.at(i).macaddr
+                     << "silent for" << (now - mList.at(i).foundEpoc) << "s";
             beginRemoveRows(QModelIndex(), i, i);
             mList.remove(i);
             endRemoveRows();
             i--;
             emit listChanged();
-        } else {
-            /* Update panel infos */
+        }
+        else
+        {
             QUrl url(QString(REQ_PROTO) + mList.at(i).ipv4addr + REQ_PORT
                      + "/rest/api/v1?cache=true&js=true&js_var=_global_data");
 
