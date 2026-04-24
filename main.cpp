@@ -6,6 +6,7 @@
 #include <QMessageBox>
 
 #include "newstonkamudpmulticast.h"
+#include "appsettings.h"
 #include "panellistmodel.h"
 #include "systemtray.h"
 #include "udpfinder.h"
@@ -82,7 +83,8 @@ int main(int argc, char *argv[])
     MY_SPLASH_SET_PROGRESS(splash, 40);
     QClipboard *clipboard = QGuiApplication::clipboard();
 
-    PanelListModel listModel;
+    AppSettings appSettings;
+    PanelListModel listModel(&appSettings);
 
     //Create filter model
     MY_SPLASH_SET_PROGRESS(splash, 50);
@@ -117,6 +119,7 @@ int main(int argc, char *argv[])
     SystemTray * systemTray = new SystemTray();
     context->setContextProperty("systemTray", systemTray);
     context->setContextProperty("serviceUDP", &serviceUDP);
+    context->setContextProperty("appSettings", &appSettings);
 
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));
     if (engine.rootObjects().isEmpty())

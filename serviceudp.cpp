@@ -42,7 +42,7 @@ void ServiceUDP::readyRead()     //Read something
         emit guiMaximize();
         break;
     default:
-        qWarning() << "Boh";
+        qWarning("Local UDP Service unknow command");
         break;
     }
 

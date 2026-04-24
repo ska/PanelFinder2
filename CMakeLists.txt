@@ -16,6 +16,7 @@ add_definitions(-DUSE_SSL)
 set(PROJECT_SOURCES
     main.cpp
     common.h
+    appsettings.cpp appsettings.h
     panellistmodel.cpp panellistmodel.h
     systemtray.cpp systemtray.h
     udpfinder.cpp udpfinder.h

@@ -11,20 +11,18 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QClipboard>
-#include <QSettings>
 #include <QDateTime>
 #include <QVector>
 #include <QTimer>
-#include <QFile>
 #include <QDebug>
 #if QT_VERSION >= 0x050A00
 #include <QRandomGenerator>
 #endif
 #include "common.h"
+#include "appsettings.h"
 
 #define REQ_PROTO   "https://"
 #define REQ_PORT    ""
-#define SETTING_FNAME "PanelFinder2SettingFile.ini"
 
 struct PanelItem
 {
@@ -37,14 +35,6 @@ struct PanelItem
     QString configosVersion;
     QString serialNo;
     qint64  foundEpoc;
-};
-
-struct PanelSettingItem
-{
-    QString ipv4addr;
-    //quint8  ipv4u8[4];
-    QString uname;
-    QString password;
 };
 
 enum Roles {
@@ -63,7 +53,7 @@ class PanelListModel : public QAbstractListModel
 {
     Q_OBJECT
 public:
-    PanelListModel();
+    explicit PanelListModel(AppSettings *settings);
     ~PanelListModel();
     void addData(const PanelItem &unit);
     void insertData(const PanelItem &unit);
@@ -89,17 +79,15 @@ signals:
     void listChanged();
 
 private:
+    AppSettings           *mSettings;
     QNetworkAccessManager *manager;
-    QVector <PanelItem> mList;
-    QVector <PanelSettingItem> mPanelSettList;
-    PanelSettingItem mPanelSettDefault;
-    QTimer *mTimer;
+    QVector<PanelItem>     mList;
+    QTimer                *mTimer;
 
     quint8 toCidr(const QString ipv4netmask) const;
     void jsonFindValue(QString ip, QJsonObject *jobj);
     void jsonFindValueHelper(QString ip, QJsonObject *jobj, QVector<QString> &path);
     void jsonParseValue(QString ip, QString jsonpath, QString jsonvalue);
-    qint16 findInPanelSetting( const QString r);
     void rebootPanel(QString ipadr, quint8 rt);
 };
 
